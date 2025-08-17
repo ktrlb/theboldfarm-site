@@ -39,9 +39,10 @@ export default function GoatsPage() {
         <Navigation />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
-            <h3 className="text-lg font-medium text-red-800 mb-2">Error loading data</h3>
-            <p className="text-red-700">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
+              <h3 className="text-lg font-medium text-red-800 mb-2">Error loading data</h3>
+              <p className="text-red-700">{error}</p>
+            </div>
           </div>
         </div>
         <Footer />
@@ -162,7 +163,7 @@ export default function GoatsPage() {
                     </Badge>
                   </div>
                   <CardDescription className="text-base font-medium text-gray-700">
-                    {goat.type} • {getGoatAge(goat)} • {goat.hornStatus}
+                    {goat.type} • {getGoatAge(goat)} • {goat.horn_status}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">

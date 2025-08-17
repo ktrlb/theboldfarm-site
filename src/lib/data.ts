@@ -1,41 +1,19 @@
 // Shared data for the farm website
-export interface Goat {
-  id: number;
-  name: string;
-  type: string;
-  birthDate: string; // ISO date string or just year
-  birthType: 'exact' | 'year'; // whether we have exact date or just year
-  price: number;
-  registered: boolean;
-  hornStatus: string;
-  dam?: string;
-  sire?: string;
-  bio: string;
-  status: string;
-  photos: string[]; // Array of photo URLs or base64 strings
-}
+import { Database } from './supabase';
 
-export interface Product {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  description: string;
-  inStock: boolean;
-  featured: boolean;
-}
+type GoatRow = Database['public']['Tables']['goats']['Row'];
+type ProductRow = Database['public']['Tables']['products']['Row'];
 
-// Initial goats data
-export const initialGoats: Goat[] = [
+// Initial goats data using Supabase types
+export const initialGoats: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>[] = [
   {
-    id: 1,
     name: "Bella",
     type: "Dairy Doe",
-    birthDate: "2022-03-15",
-    birthType: "exact",
+    birth_date: "2022-03-15",
+    birth_type: "exact",
     price: 800,
     registered: true,
-    hornStatus: "Horned",
+    horn_status: "Horned",
     dam: "Luna",
     sire: "Thunder",
     bio: "Bella is a beautiful registered Nigerian Dwarf doe with excellent milk production. She's friendly, easy to handle, and has a sweet temperament. Perfect for a family looking to start their dairy goat journey.",
@@ -43,14 +21,13 @@ export const initialGoats: Goat[] = [
     photos: []
   },
   {
-    id: 2,
     name: "Shadow",
     type: "Breeding Buck",
-    birthDate: "2021",
-    birthType: "year",
+    birth_date: "2021",
+    birth_type: "year",
     price: 600,
     registered: false,
-    hornStatus: "Dehorned",
+    horn_status: "Dehorned",
     dam: "Unknown",
     sire: "Unknown",
     bio: "Shadow is a handsome unregistered buck with great genetics. He's proven and has sired healthy, friendly kids. Great addition to any herd.",
@@ -58,14 +35,13 @@ export const initialGoats: Goat[] = [
     photos: []
   },
   {
-    id: 3,
     name: "Peanut",
     type: "Kid",
-    birthDate: "2024-09-15",
-    birthType: "exact",
+    birth_date: "2024-09-15",
+    birth_type: "exact",
     price: 400,
     registered: false,
-    hornStatus: "Horned",
+    horn_status: "Horned",
     dam: "Bella",
     sire: "Shadow",
     bio: "Peanut is an adorable kid with a playful personality. She's been handled since birth and is very friendly. Great starter goat for families.",
@@ -73,14 +49,13 @@ export const initialGoats: Goat[] = [
     photos: []
   },
   {
-    id: 4,
     name: "Moon",
     type: "Dairy Doe",
-    birthDate: "2023-06-20",
-    birthType: "exact",
+    birth_date: "2023-06-20",
+    birth_type: "exact",
     price: 750,
     registered: true,
-    hornStatus: "Polled",
+    horn_status: "Polled",
     dam: "Stella",
     sire: "Shadow",
     bio: "Moon is a young registered doe with excellent conformation. She's just starting her milking career and shows great promise. Very gentle and easy to work with.",
@@ -89,23 +64,22 @@ export const initialGoats: Goat[] = [
   }
 ];
 
-// Initial products data
-export const initialProducts: Product[] = [
+// Initial products data using Supabase types
+export const initialProducts: Omit<ProductRow, 'id' | 'created_at'>[] = [
   {
-    id: 1,
     name: "Lavender Goat Milk Soap",
     category: "Soap",
     price: 6.50,
     description: "Handmade goat milk soap with lavender essential oil.",
-    inStock: true,
+    in_stock: true,
     featured: true
   }
 ];
 
-// Helper function to calculate goat age
-export function getGoatAge(goat: Goat): string {
-  if (goat.birthType === 'exact') {
-    const birthDate = new Date(goat.birthDate);
+// Helper function to calculate goat age using Supabase types
+export function getGoatAge(goat: GoatRow): string {
+  if (goat.birth_type === 'exact' && goat.birth_date) {
+    const birthDate = new Date(goat.birth_date);
     const today = new Date();
     let ageInYears = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -123,13 +97,13 @@ export function getGoatAge(goat: Goat): string {
   } else {
     // Just year - calculate approximate age
     const currentYear = new Date().getFullYear();
-    const ageInYears = currentYear - parseInt(goat.birthDate);
+    const ageInYears = currentYear - parseInt(goat.birth_date || currentYear.toString());
     return `${ageInYears} years old (approx)`;
   }
 }
 
 // Helper function to generate cute placeholder images
-export function getGoatPlaceholder(goat: Goat): string {
+export function getGoatPlaceholder(goat: GoatRow): string {
   const placeholders = [
     "🐐", "🐑", "🦙", "🦌", "🐄", "🐖", "🐎", "🐓", "🦆", "🦢"
   ];
@@ -137,3 +111,6 @@ export function getGoatPlaceholder(goat: Goat): string {
   const index = goat.name.charCodeAt(0) % placeholders.length;
   return placeholders[index];
 }
+
+// Export the Supabase types for use in other components
+export type { GoatRow, ProductRow };

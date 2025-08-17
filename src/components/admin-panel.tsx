@@ -9,20 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
-import { getGoatAge, getGoatPlaceholder } from "@/lib/data";
+import { getGoatAge, getGoatPlaceholder, GoatRow, ProductRow } from "@/lib/data";
 import { useSupabase } from "@/lib/supabase-context";
 import { Database } from "@/lib/supabase";
-
-type GoatRow = Database['public']['Tables']['goats']['Row'];
-type ProductRow = Database['public']['Tables']['products']['Row'];
-
-
 
 interface AdminPanelProps {
   onLogout?: () => void;
 }
-
-
 
 export function AdminPanel({ onLogout }: AdminPanelProps) {
   const { goats, products, addGoat: addGoatToSupabase, updateGoat: updateGoatInSupabase, deleteGoat: deleteGoatFromSupabase, addProduct: addProductToSupabase, updateProduct: updateProductInSupabase, deleteProduct: deleteProductFromSupabase, loading, error } = useSupabase();
@@ -32,12 +25,12 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   const [showAddGoat, setShowAddGoat] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
 
-  const addGoat = async (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => {
+  const addGoat = async (goat: Omit<Database['public']['Tables']['goats']['Insert'], 'id' | 'created_at' | 'updated_at'>) => {
     await addGoatToSupabase(goat);
     setShowAddGoat(false);
   };
 
-  const updateGoat = async (id: number, updates: Partial<GoatRow>) => {
+  const updateGoat = async (id: number, updates: Partial<Database['public']['Tables']['goats']['Update']>) => {
     await updateGoatInSupabase(id, updates);
     setEditingGoat(null);
   };
@@ -46,12 +39,12 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     await deleteGoatFromSupabase(id);
   };
 
-  const addProduct = async (product: Omit<ProductRow, 'id' | 'created_at'>) => {
+  const addProduct = async (product: Omit<Database['public']['Tables']['products']['Insert'], 'id' | 'created_at'>) => {
     await addProductToSupabase(product);
     setShowAddProduct(false);
   };
 
-  const updateProduct = async (id: number, updates: Partial<ProductRow>) => {
+  const updateProduct = async (id: number, updates: Partial<Database['public']['Tables']['products']['Update']>) => {
     await updateProductInSupabase(id, updates);
     setEditingProduct(null);
   };
@@ -196,7 +189,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                     Enter the details for the new goat.
                   </DialogDescription>
                 </DialogHeader>
-                <AddGoatForm onSubmit={addGoat} />
+                <AddGoatForm onSubmit={addGoat} onClose={() => setShowAddGoat(false)} />
               </DialogContent>
             </Dialog>
           </div>
@@ -209,7 +202,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   <div>
                     <h3 className="font-semibold">{goat.name}</h3>
                     <p className="text-sm text-gray-600">
-                      {goat.type} • {getGoatAge(goat)} • {goat.hornStatus} • ${goat.price}
+                      {goat.type} • {getGoatAge(goat)} • {goat.horn_status} • ${goat.price}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -322,7 +315,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 Update the goat's information.
               </DialogDescription>
             </DialogHeader>
-            <EditGoatForm goat={editingGoat} onSubmit={updateGoat} />
+            <EditGoatForm goat={editingGoat} onSubmit={(updates) => updateGoat(editingGoat!.id, updates)} onClose={() => setEditingGoat(null)} />
           </DialogContent>
         </Dialog>
       )}
@@ -337,7 +330,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 Update the product's information.
               </DialogDescription>
             </DialogHeader>
-            <EditProductForm product={editingProduct} onSubmit={updateProduct} />
+            <EditProductForm product={editingProduct} onSubmit={(updates) => updateProduct(editingProduct!.id, updates)} />
           </DialogContent>
         </Dialog>
       )}
@@ -345,15 +338,15 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   );
 }
 
-function AddGoatForm({ onSubmit }: { onSubmit: (goat: Omit<Goat, 'id'>) => void }) {
+function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<Database['public']['Tables']['goats']['Insert'], 'id' | 'created_at' | 'updated_at'>) => void; onClose: () => void }) {
   const [formData, setFormData] = useState({
     name: "",
     type: "",
-    birthDate: new Date().toISOString().split('T')[0], // Today's date as default
-    birthType: "exact" as 'exact' | 'year',
+    birth_date: new Date().toISOString().split('T')[0], // Today's date as default
+    birth_type: "exact" as 'exact' | 'year',
     price: 0,
     registered: false,
-    hornStatus: "Horned",
+    horn_status: "Horned",
     dam: "",
     sire: "",
     bio: "",
@@ -363,7 +356,35 @@ function AddGoatForm({ onSubmit }: { onSubmit: (goat: Omit<Goat, 'id'>) => void 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({
+      name: formData.name,
+      type: formData.type,
+      birth_date: formData.birth_date || null,
+      birth_type: formData.birth_type,
+      price: formData.price,
+      registered: formData.registered,
+      horn_status: formData.horn_status,
+      dam: formData.dam || null,
+      sire: formData.sire || null,
+      bio: formData.bio,
+      status: formData.status,
+      photos: formData.photos
+    });
+    setFormData({
+      name: "",
+      type: "",
+      birth_date: new Date().toISOString().split('T')[0], // Today's date as default
+      birth_type: "exact" as 'exact' | 'year',
+      price: 0,
+      registered: false,
+      horn_status: "Horned",
+      dam: "",
+      sire: "",
+      bio: "",
+      status: "Available",
+      photos: [] as string[]
+    });
+    onClose();
   };
 
   return (
@@ -396,8 +417,8 @@ function AddGoatForm({ onSubmit }: { onSubmit: (goat: Omit<Goat, 'id'>) => void 
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="hornStatus">Horn Status</Label>
-          <Select value={formData.hornStatus} onValueChange={(value) => setFormData({ ...formData, hornStatus: value })}>
+          <Label htmlFor="horn_status">Horn Status</Label>
+          <Select value={formData.horn_status} onValueChange={(value) => setFormData({ ...formData, horn_status: value })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -427,8 +448,8 @@ function AddGoatForm({ onSubmit }: { onSubmit: (goat: Omit<Goat, 'id'>) => void 
       
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="birthType">Birth Type</Label>
-          <Select value={formData.birthType} onValueChange={(value: 'exact' | 'year') => setFormData({ ...formData, birthType: value })}>
+          <Label htmlFor="birth_type">Birth Type</Label>
+          <Select value={formData.birth_type} onValueChange={(value: 'exact' | 'year') => setFormData({ ...formData, birth_type: value })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -439,26 +460,26 @@ function AddGoatForm({ onSubmit }: { onSubmit: (goat: Omit<Goat, 'id'>) => void 
           </Select>
         </div>
         <div>
-          <Label htmlFor="birthDate">
-            {formData.birthType === 'exact' ? 'Birth Date' : 'Birth Year'}
+          <Label htmlFor="birth_date">
+            {formData.birth_type === 'exact' ? 'Birth Date' : 'Birth Year'}
           </Label>
-          {formData.birthType === 'exact' ? (
+          {formData.birth_type === 'exact' ? (
             <Input
-              id="birthDate"
+              id="birth_date"
               type="date"
               max={new Date().toISOString().split('T')[0]}
-              value={formData.birthDate}
-              onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+              value={formData.birth_date}
+              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
               required
             />
           ) : (
             <Input
-              id="birthDate"
+              id="birth_date"
               type="number"
               min="1990"
               max={new Date().getFullYear()}
-              value={formData.birthDate}
-              onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+              value={formData.birth_date}
+              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
               required
             />
           )}
@@ -573,12 +594,40 @@ function AddGoatForm({ onSubmit }: { onSubmit: (goat: Omit<Goat, 'id'>) => void 
   );
 }
 
-function EditGoatForm({ goat, onSubmit }: { goat: Goat; onSubmit: (goat: Goat) => void }) {
+function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (goat: Database['public']['Tables']['goats']['Update']) => void; onClose: () => void }) {
   const [formData, setFormData] = useState(goat);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({
+      name: formData.name,
+      type: formData.type,
+      birth_date: formData.birth_date || null,
+      birth_type: formData.birth_type,
+      price: formData.price,
+      registered: formData.registered,
+      horn_status: formData.horn_status,
+      dam: formData.dam || null,
+      sire: formData.sire || null,
+      bio: formData.bio,
+      status: formData.status,
+      photos: formData.photos
+    });
+    setFormData({
+      name: "",
+      type: "",
+      birth_date: new Date().toISOString().split('T')[0], // Today's date as default
+      birth_type: "exact" as 'exact' | 'year',
+      price: 0,
+      registered: false,
+      horn_status: "Horned",
+      dam: "",
+      sire: "",
+      bio: "",
+      status: "Available",
+      photos: [] as string[]
+    });
+    onClose();
   };
 
   return (
@@ -611,7 +660,7 @@ function EditGoatForm({ goat, onSubmit }: { goat: Goat; onSubmit: (goat: Goat) =
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="edit-hornStatus">Horn Status</Label>
-          <Select value={formData.hornStatus} onValueChange={(value) => setFormData({ ...formData, hornStatus: value })}>
+          <Select value={formData.horn_status} onValueChange={(value) => setFormData({ ...formData, horn_status: value })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -642,7 +691,7 @@ function EditGoatForm({ goat, onSubmit }: { goat: Goat; onSubmit: (goat: Goat) =
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="edit-birthType">Birth Type</Label>
-          <Select value={formData.birthType} onValueChange={(value: 'exact' | 'year') => setFormData({ ...formData, birthType: value })}>
+          <Select value={formData.birth_type} onValueChange={(value: 'exact' | 'year') => setFormData({ ...formData, birth_type: value })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -654,15 +703,15 @@ function EditGoatForm({ goat, onSubmit }: { goat: Goat; onSubmit: (goat: Goat) =
         </div>
         <div>
           <Label htmlFor="edit-birthDate">
-            {formData.birthType === 'exact' ? 'Birth Date' : 'Birth Year'}
+            {formData.birth_type === 'exact' ? 'Birth Date' : 'Birth Year'}
           </Label>
-          {formData.birthType === 'exact' ? (
+          {formData.birth_type === 'exact' ? (
             <Input
               id="edit-birthDate"
               type="date"
               max={new Date().toISOString().split('T')[0]}
-              value={formData.birthDate}
-              onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+              value={formData.birth_date || ''}
+              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value || null })}
               required
             />
           ) : (
@@ -671,8 +720,8 @@ function EditGoatForm({ goat, onSubmit }: { goat: Goat; onSubmit: (goat: Goat) =
               type="number"
               min="1990"
               max={new Date().getFullYear()}
-              value={formData.birthDate}
-              onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+              value={formData.birth_date || ''}
+              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value || null })}
               required
             />
           )}
@@ -695,16 +744,16 @@ function EditGoatForm({ goat, onSubmit }: { goat: Goat; onSubmit: (goat: Goat) =
           <Label htmlFor="edit-dam">Dam (Mother)</Label>
           <Input
             id="edit-dam"
-            value={formData.dam}
-            onChange={(e) => setFormData({ ...formData, dam: e.target.value })}
+            value={formData.dam || ''}
+            onChange={(e) => setFormData({ ...formData, dam: e.target.value || null })}
           />
         </div>
         <div>
           <Label htmlFor="edit-sire">Sire (Father)</Label>
           <Input
             id="edit-sire"
-            value={formData.sire}
-            onChange={(e) => setFormData({ ...formData, sire: e.target.value })}
+            value={formData.sire || ''}
+            onChange={(e) => setFormData({ ...formData, sire: e.target.value || null })}
           />
         </div>
       </div>
@@ -787,19 +836,35 @@ function EditGoatForm({ goat, onSubmit }: { goat: Goat; onSubmit: (goat: Goat) =
   );
 }
 
-function AddProductForm({ onSubmit }: { onSubmit: (product: Omit<Product, 'id'>) => void }) {
+function AddProductForm({ onSubmit }: { onSubmit: (product: Omit<Database['public']['Tables']['products']['Insert'], 'id' | 'created_at'>) => void }) {
   const [formData, setFormData] = useState({
     name: "",
     category: "",
     price: 0,
     description: "",
-    inStock: true,
+    in_stock: true,
     featured: false
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({
+      name: formData.name,
+      category: formData.category,
+      price: formData.price,
+      description: formData.description,
+      in_stock: formData.in_stock,
+      featured: formData.featured
+    });
+    setFormData({
+      name: "",
+      category: "",
+      price: 0,
+      description: "",
+      in_stock: true,
+      featured: false
+    });
+    setShowAddProduct(false);
   };
 
   return (
@@ -867,12 +932,29 @@ function AddProductForm({ onSubmit }: { onSubmit: (product: Omit<Product, 'id'>)
   );
 }
 
-function EditProductForm({ product, onSubmit }: { product: Product; onSubmit: (product: Product) => void }) {
+function EditProductForm({ product, onSubmit }: { product: ProductRow; onSubmit: (product: Database['public']['Tables']['products']['Update']) => void }) {
   const [formData, setFormData] = useState(product);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onSubmit({
+      name: formData.name,
+      category: formData.category,
+      price: formData.price,
+      description: formData.description,
+      in_stock: formData.in_stock,
+      featured: formData.featured
+    });
+    setFormData({
+      name: "",
+      category: "",
+      price: 0,
+      description: "",
+      in_stock: true,
+      featured: false
+    });
+    setEditingProduct(null);
+    setShowAddProduct(false);
   };
 
   return (

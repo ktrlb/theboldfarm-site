@@ -2,13 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase, Database } from "./supabase";
-import { Goat, Product, initialGoats, initialProducts } from "./data";
+import { GoatRow, ProductRow, initialGoats, initialProducts } from "./data";
 
-type GoatRow = Database['public']['Tables']['goats']['Row'];
 type GoatInsert = Database['public']['Tables']['goats']['Insert'];
 type GoatUpdate = Database['public']['Tables']['goats']['Update'];
 
-type ProductRow = Database['public']['Tables']['products']['Row'];
 type ProductInsert = Database['public']['Tables']['products']['Insert'];
 type ProductUpdate = Database['public']['Tables']['products']['Update'];
 
@@ -17,10 +15,10 @@ interface SupabaseContextType {
   products: ProductRow[];
   loading: boolean;
   error: string | null;
-  addGoat: (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  addGoat: (goat: Omit<GoatInsert, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateGoat: (id: number, updates: Partial<GoatUpdate>) => Promise<void>;
   deleteGoat: (id: number) => Promise<void>;
-  addProduct: (product: Omit<ProductRow, 'id' | 'created_at'>) => Promise<void>;
+  addProduct: (product: Omit<ProductInsert, 'id' | 'created_at'>) => Promise<void>;
   updateProduct: (id: number, updates: Partial<ProductUpdate>) => Promise<void>;
   deleteProduct: (id: number) => Promise<void>;
   refreshData: () => Promise<void>;
@@ -34,34 +32,6 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Convert database row to our Goat interface
-  const convertGoatRow = (row: GoatRow): Goat => ({
-    id: row.id,
-    name: row.name,
-    type: row.type,
-    birthDate: row.birth_date || '',
-    birthType: row.birth_type,
-    price: row.price,
-    registered: row.registered,
-    hornStatus: row.horn_status,
-    dam: row.dam || undefined,
-    sire: row.sire || undefined,
-    bio: row.bio,
-    status: row.status,
-    photos: row.photos || []
-  });
-
-  // Convert database row to our Product interface
-  const convertProductRow = (row: ProductRow): Product => ({
-    id: row.id,
-    name: row.name,
-    category: row.category,
-    price: row.price,
-    description: row.description,
-    inStock: row.in_stock,
-    featured: row.featured
-  });
-
   // Fetch all data from Supabase
   const fetchData = async () => {
     try {
@@ -72,30 +42,30 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
       if (!supabase) {
         console.log('Supabase not configured, using fallback data');
         // Fallback to initial data if Supabase is not configured
-        setGoats(initialGoats.map(goat => ({
-          id: goat.id,
+        setGoats(initialGoats.map((goat, index) => ({
+          id: index + 1,
           name: goat.name,
           type: goat.type,
-          birth_date: goat.birthDate,
-          birth_type: goat.birthType,
+          birth_date: goat.birth_date,
+          birth_type: goat.birth_type,
           price: goat.price,
           registered: goat.registered,
-          horn_status: goat.hornStatus,
-          dam: goat.dam || null,
-          sire: goat.sire || null,
+          horn_status: goat.horn_status,
+          dam: goat.dam,
+          sire: goat.sire,
           bio: goat.bio,
           status: goat.status,
           photos: goat.photos,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })));
-        setProducts(initialProducts.map(product => ({
-          id: product.id,
+        setProducts(initialProducts.map((product, index) => ({
+          id: index + 1,
           name: product.name,
           category: product.category,
           price: product.price,
           description: product.description,
-          in_stock: product.inStock,
+          in_stock: product.in_stock,
           featured: product.featured,
           created_at: new Date().toISOString()
         })));
@@ -139,30 +109,30 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
       setError(errorMessage);
       
       // Fallback to initial data if Supabase fails
-      setGoats(initialGoats.map(goat => ({
-        id: goat.id,
+      setGoats(initialGoats.map((goat, index) => ({
+        id: index + 1,
         name: goat.name,
         type: goat.type,
-        birth_date: goat.birthDate,
-        birth_type: goat.birthType,
+        birth_date: goat.birth_date,
+        birth_type: goat.birth_type,
         price: goat.price,
         registered: goat.registered,
-        horn_status: goat.hornStatus,
-        dam: goat.dam || null,
-        sire: goat.sire || null,
+        horn_status: goat.horn_status,
+        dam: goat.dam,
+        sire: goat.sire,
         bio: goat.bio,
         status: goat.status,
         photos: goat.photos,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })));
-      setProducts(initialProducts.map(product => ({
-        id: product.id,
+      setProducts(initialProducts.map((product, index) => ({
+        id: index + 1,
         name: product.name,
         category: product.category,
         price: product.price,
         description: product.description,
-        in_stock: product.inStock,
+        in_stock: product.in_stock,
         featured: product.featured,
         created_at: new Date().toISOString()
       })));

@@ -111,7 +111,7 @@ export default function AnimalsPage() {
                         </Badge>
                       </div>
                       <CardDescription className="text-base font-medium text-gray-700">
-                        {getGoatAge(goat)} • {goat.hornStatus}
+                        {getGoatAge(goat)} • {goat.horn_status}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -160,7 +160,7 @@ export default function AnimalsPage() {
                         </Badge>
                       </div>
                       <CardDescription className="text-base font-medium text-gray-700">
-                        {getGoatAge(goat)} • {goat.hornStatus}
+                        {getGoatAge(goat)} • {goat.horn_status}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -209,7 +209,7 @@ export default function AnimalsPage() {
                         </Badge>
                       </div>
                       <CardDescription className="text-base font-medium text-gray-700">
-                        {getGoatAge(goat)} • {goat.hornStatus}
+                        {getGoatAge(goat)} • {goat.horn_status}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
