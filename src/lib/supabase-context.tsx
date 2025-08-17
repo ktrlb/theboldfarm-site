@@ -15,10 +15,10 @@ interface SupabaseContextType {
   products: ProductRow[];
   loading: boolean;
   error: string | null;
-  addGoat: (goat: Omit<GoatInsert, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  addGoat: (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   updateGoat: (id: number, updates: Partial<GoatUpdate>) => Promise<void>;
   deleteGoat: (id: number) => Promise<void>;
-  addProduct: (product: Omit<ProductInsert, 'id' | 'created_at'>) => Promise<void>;
+  addProduct: (product: Omit<ProductRow, 'id' | 'created_at'>) => Promise<void>;
   updateProduct: (id: number, updates: Partial<ProductUpdate>) => Promise<void>;
   deleteProduct: (id: number) => Promise<void>;
   refreshData: () => Promise<void>;
@@ -174,6 +174,10 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
   // Update an existing goat
   const updateGoat = async (id: number, updates: Partial<GoatUpdate>) => {
     try {
+      if (!supabase) {
+        console.log('Supabase not configured, cannot update goat');
+        return;
+      }
       const { data, error } = await supabase
         .from('goats')
         .update({ ...updates, updated_at: new Date().toISOString() })
@@ -193,6 +197,10 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
   // Delete a goat
   const deleteGoat = async (id: number) => {
     try {
+      if (!supabase) {
+        console.log('Supabase not configured, cannot delete goat');
+        return;
+      }
       const { error } = await supabase
         .from('goats')
         .delete()
@@ -210,6 +218,10 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
   // Add a new product
   const addProduct = async (product: Omit<ProductRow, 'id' | 'created_at'>) => {
     try {
+      if (!supabase) {
+        console.log('Supabase not configured, cannot add product');
+        return;
+      }
       const { data, error } = await supabase
         .from('products')
         .insert([product])
@@ -228,6 +240,10 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
   // Update an existing product
   const updateProduct = async (id: number, updates: Partial<ProductUpdate>) => {
     try {
+      if (!supabase) {
+        console.log('Supabase not configured, cannot update product');
+        return;
+      }
       const { data, error } = await supabase
         .from('products')
         .update(updates)
@@ -247,6 +263,10 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
   // Delete a product
   const deleteProduct = async (id: number) => {
     try {
+      if (!supabase) {
+        console.log('Supabase not configured, cannot delete product');
+        return;
+      }
       const { error } = await supabase
         .from('products')
         .delete()

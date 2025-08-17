@@ -25,7 +25,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   const [showAddGoat, setShowAddGoat] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
 
-  const addGoat = async (goat: Omit<Database['public']['Tables']['goats']['Insert'], 'id' | 'created_at' | 'updated_at'>) => {
+  const addGoat = async (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => {
     await addGoatToSupabase(goat);
     setShowAddGoat(false);
   };
@@ -39,7 +39,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     await deleteGoatFromSupabase(id);
   };
 
-  const addProduct = async (product: Omit<Database['public']['Tables']['products']['Insert'], 'id' | 'created_at'>) => {
+  const addProduct = async (product: Omit<ProductRow, 'id' | 'created_at'>) => {
     await addProductToSupabase(product);
     setShowAddProduct(false);
   };
@@ -270,7 +270,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                     Enter the details for the new product.
                   </DialogDescription>
                 </DialogHeader>
-                <AddProductForm onSubmit={addProduct} />
+                <AddProductForm onSubmit={addProduct} onClose={() => setShowAddProduct(false)} />
               </DialogContent>
             </Dialog>
           </div>
@@ -330,7 +330,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 Update the product's information.
               </DialogDescription>
             </DialogHeader>
-            <EditProductForm product={editingProduct} onSubmit={(updates) => updateProduct(editingProduct!.id, updates)} />
+            <EditProductForm product={editingProduct} onSubmit={(updates) => updateProduct(editingProduct!.id, updates)} onClose={() => setEditingProduct(null)} />
           </DialogContent>
         </Dialog>
       )}
@@ -338,7 +338,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   );
 }
 
-function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<Database['public']['Tables']['goats']['Insert'], 'id' | 'created_at' | 'updated_at'>) => void; onClose: () => void }) {
+function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => void; onClose: () => void }) {
   const [formData, setFormData] = useState({
     name: "",
     type: "",
@@ -595,7 +595,33 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<Database['pu
 }
 
 function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (goat: Database['public']['Tables']['goats']['Update']) => void; onClose: () => void }) {
-  const [formData, setFormData] = useState(goat);
+  const [formData, setFormData] = useState({
+    name: goat.name,
+    type: goat.type,
+    birth_date: goat.birth_date || "",
+    birth_type: goat.birth_type,
+    price: goat.price,
+    registered: goat.registered,
+    horn_status: goat.horn_status,
+    dam: goat.dam || "",
+    sire: goat.sire || "",
+    bio: goat.bio,
+    status: goat.status,
+    photos: goat.photos
+  } as {
+    name: string;
+    type: string;
+    birth_date: string | null;
+    birth_type: 'exact' | 'year';
+    price: number;
+    registered: boolean;
+    horn_status: string;
+    dam: string | null;
+    sire: string | null;
+    bio: string;
+    status: string;
+    photos: string[];
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -836,7 +862,7 @@ function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (g
   );
 }
 
-function AddProductForm({ onSubmit }: { onSubmit: (product: Omit<Database['public']['Tables']['products']['Insert'], 'id' | 'created_at'>) => void }) {
+function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<ProductRow, 'id' | 'created_at'>) => void; onClose: () => void }) {
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -864,7 +890,7 @@ function AddProductForm({ onSubmit }: { onSubmit: (product: Omit<Database['publi
       in_stock: true,
       featured: false
     });
-    setShowAddProduct(false);
+    onClose();
   };
 
   return (
@@ -932,8 +958,22 @@ function AddProductForm({ onSubmit }: { onSubmit: (product: Omit<Database['publi
   );
 }
 
-function EditProductForm({ product, onSubmit }: { product: ProductRow; onSubmit: (product: Database['public']['Tables']['products']['Update']) => void }) {
-  const [formData, setFormData] = useState(product);
+function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; onSubmit: (product: Database['public']['Tables']['products']['Update']) => void; onClose: () => void }) {
+  const [formData, setFormData] = useState({
+    name: product.name,
+    category: product.category,
+    price: product.price,
+    description: product.description,
+    in_stock: product.in_stock,
+    featured: product.featured
+  } as {
+    name: string;
+    category: string;
+    price: number;
+    description: string;
+    in_stock: boolean;
+    featured: boolean;
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -953,8 +993,7 @@ function EditProductForm({ product, onSubmit }: { product: ProductRow; onSubmit:
       in_stock: true,
       featured: false
     });
-    setEditingProduct(null);
-    setShowAddProduct(false);
+    onClose();
   };
 
   return (
