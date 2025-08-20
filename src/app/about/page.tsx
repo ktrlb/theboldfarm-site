@@ -2,6 +2,7 @@ import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Leaf, Users, Target } from "lucide-react";
+import Image from "next/image";
 
 export default function AboutPage() {
   return (
@@ -11,9 +12,17 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="py-20 bg-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-            About The Bold Farm
-          </h1>
+          <div className="mb-8">
+            <Image
+              src="/theboldfarm-logo.png"
+              alt="The Bold Farm Logo"
+              width={250}
+              height={83}
+              className="mx-auto h-20 w-auto"
+              priority
+            />
+          </div>
+
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             We're passionate about sustainable farming, quality livestock, and building a community 
             around traditional homesteading values.

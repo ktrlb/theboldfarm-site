@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Star, Egg, Leaf } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function HomePage() {
   return (
@@ -14,9 +15,17 @@ export default function HomePage() {
       <section className="relative h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 farm-gradient opacity-90"></div>
         <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 mb-6 text-shadow">
-            The Bold Farm
-          </h1>
+          <div className="mb-8">
+            <Image
+              src="/theboldfarm-logo.png"
+              alt="The Bold Farm Logo"
+              width={500}
+              height={167}
+              className="mx-auto h-40 w-auto drop-shadow-lg"
+              priority
+            />
+          </div>
+
           <p className="text-xl sm:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto">
             Quality Nigerian Dwarf dairy goats, family cows, and homestead products. 
             Building a sustainable future, one animal at a time.

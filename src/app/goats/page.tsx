@@ -9,6 +9,7 @@ import { DollarSign, Calendar, Award } from "lucide-react";
 import Link from "next/link";
 import { getGoatAge, getGoatPlaceholder } from "@/lib/data";
 import { useSupabase } from "@/lib/supabase-context";
+import Image from "next/image";
 
 
 
@@ -56,9 +57,17 @@ export default function GoatsPage() {
       {/* Hero Section */}
       <section className="py-20 bg-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-            Goats for Sale
-          </h1>
+          <div className="mb-8">
+            <Image
+              src="/theboldfarm-logo.png"
+              alt="The Bold Farm Logo"
+              width={250}
+              height={83}
+              className="mx-auto h-20 w-auto"
+              priority
+            />
+          </div>
+
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Quality Nigerian Dwarf goats available for your homestead. All our goats are healthy, 
             well-socialized, and come with ongoing support.

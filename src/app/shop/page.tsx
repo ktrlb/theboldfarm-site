@@ -117,9 +117,17 @@ export default function ShopPage() {
       {/* Hero Section */}
       <section className="py-20 bg-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-6">
-            Homestead Shop
-          </h1>
+          <div className="mb-8">
+            <Image
+              src="/theboldfarm-logo.png"
+              alt="The Bold Farm Logo"
+              width={250}
+              height={83}
+              className="mx-auto h-20 w-auto"
+              priority
+            />
+          </div>
+
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Handcrafted products from our farm to yours. From goat milk soap to farm-themed clothing, 
             we create quality items that celebrate the homestead lifestyle.

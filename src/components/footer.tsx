@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, MapPin } from "lucide-react";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -60,8 +61,17 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-          <p>&copy; {new Date().getFullYear()} The Bold Farm. All rights reserved.</p>
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center">
+          <div className="flex flex-col items-center space-y-4">
+            <Image
+              src="/theboldfarm-logo.png"
+              alt="The Bold Farm Logo"
+              width={100}
+              height={33}
+              className="h-8 w-auto filter brightness-0 invert"
+            />
+            <p className="text-gray-400">&copy; {new Date().getFullYear()} The Bold Farm. All rights reserved.</p>
+          </div>
         </div>
       </div>
     </footer>

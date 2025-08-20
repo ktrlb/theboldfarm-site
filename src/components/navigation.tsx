@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Cart } from "@/components/cart";
+import Image from "next/image";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -26,7 +27,14 @@ export function Navigation() {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold text-gray-900">The Bold Farm</span>
+              <Image
+                src="/theboldfarm-logo.png"
+                alt="The Bold Farm Logo"
+                width={120}
+                height={40}
+                className="h-10 w-auto"
+                priority
+              />
             </Link>
           </div>
 

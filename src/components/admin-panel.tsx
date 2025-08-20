@@ -12,6 +12,7 @@ import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { getGoatAge, getGoatPlaceholder, GoatRow, ProductRow } from "@/lib/data";
 import { useSupabase } from "@/lib/supabase-context";
 import { Database } from "@/lib/supabase";
+import Image from "next/image";
 
 interface AdminPanelProps {
   onLogout?: () => void;
@@ -56,7 +57,8 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Admin Panel</h1>
+
+
         <p className="text-lg text-gray-600">
           Manage your farm's content, animals, and products.
         </p>
