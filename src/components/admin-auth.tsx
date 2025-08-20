@@ -19,9 +19,10 @@ export function AdminAuth({ onAuthenticated }: AdminAuthProps) {
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [isLocked, setIsLocked] = useState(false);
 
-  // IMPORTANT: Change this password to something secure!
-  // In production, you'd want to use environment variables
-  const ADMIN_PASSWORD = "TheBoldFarm2024!"; // Change this!
+  // Admin password from environment variable
+  // Set NEXT_PUBLIC_ADMIN_PASSWORD in your .env.local for development
+  // Set ADMIN_PASSWORD in Vercel environment variables for production
+  const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || "TheBoldFarm2024!";
   
   // Lock out after 5 failed attempts for 15 minutes
   const MAX_ATTEMPTS = 5;
@@ -38,6 +39,11 @@ export function AdminAuth({ onAuthenticated }: AdminAuthProps) {
     setIsLoading(true);
     setError("");
 
+    // Debug: log the password being checked (remove this in production!)
+    console.log('Checking password:', password);
+    console.log('Expected password:', ADMIN_PASSWORD);
+    console.log('Environment variable:', process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
+    
     // Simple password check
     if (password === ADMIN_PASSWORD) {
       // Reset failed attempts on successful login
