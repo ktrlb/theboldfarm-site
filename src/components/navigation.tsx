@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Cart } from "@/components/cart";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -44,8 +45,19 @@ export function Navigation() {
             </div>
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
+          {/* Cart */}
+          <div className="hidden md:block">
+            <Cart />
+          </div>
+
+          {/* Cart and Mobile menu button */}
+          <div className="flex items-center gap-2">
+            {/* Cart for mobile */}
+            <div className="md:hidden">
+              <Cart />
+            </div>
+            
+            {/* Mobile menu button */}
             <Button
               variant="ghost"
               size="sm"

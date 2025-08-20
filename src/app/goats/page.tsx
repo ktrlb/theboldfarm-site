@@ -133,14 +133,14 @@ export default function GoatsPage() {
             {availableGoats.map((goat) => (
               <Card key={goat.id} className="hover:shadow-lg transition-shadow">
                 <div className="h-64 bg-orange-100 rounded-t-lg overflow-hidden">
-                  {goat.photos.length > 0 ? (
+                  {goat.photos && goat.photos.length > 0 ? (
                     <div className="relative w-full h-full">
                       <img
                         src={goat.photos[0]}
                         alt={`${goat.name}`}
                         className="w-full h-full object-cover"
                       />
-                      {goat.photos.length > 1 && (
+                      {goat.photos && goat.photos.length > 1 && (
                         <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
                           +{goat.photos.length - 1} more
                         </div>

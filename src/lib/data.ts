@@ -72,7 +72,8 @@ export const initialProducts: Omit<ProductRow, 'id' | 'created_at'>[] = [
     price: 6.50,
     description: "Handmade goat milk soap with lavender essential oil.",
     in_stock: true,
-    featured: true
+    featured: true,
+    photos: []
   }
 ];
 

@@ -67,6 +67,7 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
           description: product.description,
           in_stock: product.in_stock,
           featured: product.featured,
+          photos: product.photos,
           created_at: new Date().toISOString()
         })));
         return;
@@ -134,6 +135,7 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
         description: product.description,
         in_stock: product.in_stock,
         featured: product.featured,
+        photos: product.photos,
         created_at: new Date().toISOString()
       })));
     } finally {

@@ -91,7 +91,7 @@ export default function AnimalsPage() {
                 {dairyDoes.map((goat) => (
                   <Card key={goat.id} className="hover:shadow-lg transition-shadow">
                     <div className="h-48 bg-orange-100 rounded-t-lg overflow-hidden">
-                      {goat.photos.length > 0 ? (
+                      {goat.photos && goat.photos.length > 0 ? (
                         <img
                           src={goat.photos[0]}
                           alt={`${goat.name}`}
@@ -140,7 +140,7 @@ export default function AnimalsPage() {
                 {breedingBucks.map((goat) => (
                   <Card key={goat.id} className="hover:shadow-lg transition-shadow">
                     <div className="h-48 bg-orange-100 rounded-t-lg overflow-hidden">
-                      {goat.photos.length > 0 ? (
+                      {goat.photos && goat.photos.length > 0 ? (
                         <img
                           src={goat.photos[0]}
                           alt={`${goat.name}`}
@@ -189,7 +189,7 @@ export default function AnimalsPage() {
                 {kids.map((goat) => (
                   <Card key={goat.id} className="hover:shadow-lg transition-shadow">
                     <div className="h-48 bg-orange-100 rounded-t-lg overflow-hidden">
-                      {goat.photos.length > 0 ? (
+                      {goat.photos && goat.photos.length > 0 ? (
                         <img
                           src={goat.photos[0]}
                           alt={`${goat.name}`}

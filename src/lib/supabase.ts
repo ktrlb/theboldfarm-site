@@ -74,6 +74,7 @@ export interface Database {
           description: string
           in_stock: boolean
           featured: boolean
+          photos: string[]
           created_at: string
         }
         Insert: {
@@ -84,6 +85,7 @@ export interface Database {
           description: string
           in_stock?: boolean
           featured?: boolean
+          photos?: string[]
           created_at?: string
         }
         Update: {
@@ -94,6 +96,7 @@ export interface Database {
           description?: string
           in_stock?: boolean
           featured?: boolean
+          photos?: string[]
           created_at?: string
         }
       }

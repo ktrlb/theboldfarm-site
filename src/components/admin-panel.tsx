@@ -96,74 +96,26 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         </div>
       )}
 
-      {/* Supabase Not Configured Notice */}
+      {/* Supabase Connection Status */}
       {!loading && !error && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-8">
           <div className="flex">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">Running in Demo Mode</h3>
-              <p className="text-sm text-blue-700 mt-1">
-                Supabase is not configured yet. You're seeing sample data. 
-                <a href="https://vercel.com/docs/integrations/supabase" target="_blank" rel="noopener noreferrer" className="font-medium underline ml-1">
-                  Set up Supabase through Vercel
-                </a>
-                to persist your data.
+              <h3 className="text-sm font-medium text-green-800">Supabase Connected</h3>
+              <p className="text-sm text-green-700 mt-1">
+                Your farm data is connected to Supabase. You can now manage goats, products, and content.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Debug Information */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-3">Debug Information</h3>
-        
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Supabase URL:</span>
-            <span className={process.env.NEXT_PUBLIC_SUPABASE_URL ? 'text-green-600' : 'text-red-600'}>
-              {process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Set' : '❌ Not set'}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Supabase Anon Key:</span>
-            <span className={process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'text-green-600' : 'text-red-600'}>
-              {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Not set'}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Supabase Service Key:</span>
-            <span className={process.env.SUPABASE_SERVICE_ROLE_KEY ? 'text-green-600' : 'text-red-600'}>
-              {process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅ Set' : '❌ Not set'}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Service Key Length:</span>
-            <span className="text-gray-600">
-              {process.env.SUPABASE_SERVICE_ROLE_KEY ? `${process.env.SUPABASE_SERVICE_ROLE_KEY.length} characters` : 'N/A'}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <span className="font-medium">Service Key Preview:</span>
-            <span className="text-gray-600 font-mono text-xs">
-              {process.env.SUPABASE_SERVICE_ROLE_KEY ? `${process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 20)}...` : 'N/A'}
-            </span>
-          </div>
-        </div>
-        
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
-          <strong>Note:</strong> Environment variables are loaded at build time. If you've added new ones, restart your dev server.
-        </div>
-      </div>
+
 
       {/* Goats Management */}
       <Card className="mb-8">
@@ -279,10 +231,45 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
           <div className="space-y-4">
             {products.map((product) => (
               <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <h3 className="font-semibold">{product.name}</h3>
-                  <p className="text-sm text-gray-600">{product.category} • ${product.price}</p>
+                <div className="flex items-center gap-4">
+                  {/* Product Photo */}
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    {product.photos && product.photos.length > 0 ? (
+                      <img
+                        src={product.photos[0]}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-400 text-xs">No Photo</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Product Info */}
+                  <div>
+                    <h3 className="font-semibold">{product.name}</h3>
+                    <p className="text-sm text-gray-600">{product.category} • ${product.price}</p>
+                    <p className="text-xs text-gray-500">{product.description.substring(0, 60)}...</p>
+                    <div className="flex gap-2 mt-1">
+                      {product.featured && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                          Featured
+                        </span>
+                      )}
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        product.in_stock 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {product.in_stock ? 'In Stock' : 'Out of Stock'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+                
+                {/* Action Buttons */}
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -869,7 +856,8 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
     price: 0,
     description: "",
     in_stock: true,
-    featured: false
+    featured: false,
+    photos: [] as string[]
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -880,7 +868,8 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
       price: formData.price,
       description: formData.description,
       in_stock: formData.in_stock,
-      featured: formData.featured
+      featured: formData.featured,
+      photos: formData.photos
     });
     setFormData({
       name: "",
@@ -888,7 +877,8 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
       price: 0,
       description: "",
       in_stock: true,
-      featured: false
+      featured: false,
+      photos: []
     });
     onClose();
   };
@@ -916,6 +906,11 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
               <SelectItem value="Clothing">Clothing</SelectItem>
               <SelectItem value="Skincare">Skincare</SelectItem>
               <SelectItem value="Food">Food</SelectItem>
+              <SelectItem value="Home & Garden">Home & Garden</SelectItem>
+              <SelectItem value="Jewelry">Jewelry</SelectItem>
+              <SelectItem value="Candles">Candles</SelectItem>
+              <SelectItem value="Bath & Body">Bath & Body</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -944,6 +939,59 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
         />
       </div>
 
+      <div>
+        <Label>Photos</Label>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                const photoPromises = files.map(file => {
+                  return new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.readAsDataURL(file);
+                  });
+                });
+                
+                Promise.all(photoPromises).then(photos => {
+                  setFormData({ ...formData, photos: [...formData.photos, ...photos] });
+                });
+              }}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+            />
+          </div>
+          
+          {formData.photos.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {formData.photos.map((photo, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={photo}
+                    alt={`${formData.name} photo ${index + 1}`}
+                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <p className="text-sm text-gray-500">
+            Upload multiple photos of your product. If no photos are uploaded, placeholder images will be used.
+          </p>
+        </div>
+      </div>
+
       <div className="flex gap-2">
         <Button type="submit" className="flex-1">
           <Save className="h-4 w-4 mr-2" />
@@ -965,7 +1013,8 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
     price: product.price,
     description: product.description,
     in_stock: product.in_stock,
-    featured: product.featured
+    featured: product.featured,
+    photos: product.photos || []
   } as {
     name: string;
     category: string;
@@ -973,6 +1022,7 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
     description: string;
     in_stock: boolean;
     featured: boolean;
+    photos: string[];
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -983,7 +1033,8 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
       price: formData.price,
       description: formData.description,
       in_stock: formData.in_stock,
-      featured: formData.featured
+      featured: formData.featured,
+      photos: formData.photos
     });
     setFormData({
       name: "",
@@ -991,7 +1042,8 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
       price: 0,
       description: "",
       in_stock: true,
-      featured: false
+      featured: false,
+      photos: []
     });
     onClose();
   };
@@ -1019,6 +1071,11 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
               <SelectItem value="Clothing">Clothing</SelectItem>
               <SelectItem value="Skincare">Skincare</SelectItem>
               <SelectItem value="Food">Food</SelectItem>
+              <SelectItem value="Home & Garden">Home & Garden</SelectItem>
+              <SelectItem value="Jewelry">Jewelry</SelectItem>
+              <SelectItem value="Candles">Candles</SelectItem>
+              <SelectItem value="Bath & Body">Bath & Body</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -1045,6 +1102,59 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
           rows={3}
           required
         />
+      </div>
+
+      <div>
+        <Label>Photos</Label>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                const photoPromises = files.map(file => {
+                  return new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.readAsDataURL(file);
+                  });
+                });
+                
+                Promise.all(photoPromises).then(photos => {
+                  setFormData({ ...formData, photos: [...formData.photos, ...photos] });
+                });
+              }}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+            />
+          </div>
+          
+          {formData.photos.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {formData.photos.map((photo, index) => (
+                <div key={index} className="relative group">
+                  <img
+                    src={photo}
+                    alt={`${formData.name} photo ${index + 1}`}
+                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
+                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <p className="text-sm text-gray-500">
+            Upload multiple photos of your product. If no photos are uploaded, placeholder images will be used.
+          </p>
+        </div>
       </div>
 
       <div className="flex gap-2">
