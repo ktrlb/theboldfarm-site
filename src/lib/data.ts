@@ -81,6 +81,12 @@ export const initialProducts: Omit<ProductRow, 'id' | 'created_at'>[] = [
 export function getGoatAge(goat: GoatRow): string {
   if (goat.birth_type === 'exact' && goat.birth_date) {
     const birthDate = new Date(goat.birth_date);
+    
+    // Validate the date
+    if (isNaN(birthDate.getTime())) {
+      return "Age unknown";
+    }
+    
     const today = new Date();
     let ageInYears = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -98,8 +104,21 @@ export function getGoatAge(goat: GoatRow): string {
   } else {
     // Just year - calculate approximate age
     const currentYear = new Date().getFullYear();
-    const ageInYears = currentYear - parseInt(goat.birth_date || currentYear.toString());
-    return `${ageInYears} years old (approx)`;
+    const birthYear = parseInt(goat.birth_date || currentYear.toString());
+    
+    // Validate the year
+    if (isNaN(birthYear) || birthYear > currentYear) {
+      return "Age unknown";
+    }
+    
+    const ageInYears = currentYear - birthYear;
+    if (ageInYears === 0) {
+      return "Less than 1 year old (approx)";
+    } else if (ageInYears === 1) {
+      return "1 year old (approx)";
+    } else {
+      return `${ageInYears} years old (approx)`;
+    }
   }
 }
 
