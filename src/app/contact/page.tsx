@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, MapPin, Clock } from "lucide-react";
-import Image from "next/image";
 
 export default function ContactPage() {
   return (
@@ -17,7 +16,6 @@ export default function ContactPage() {
       {/* Hero Section */}
       <section className="py-20 bg-orange-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Have questions about our goats, want to visit the farm, or interested in our products? 
             We'd love to hear from you!

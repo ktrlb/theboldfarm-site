@@ -8,8 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ShoppingCart, Star, Leaf, Heart, Plus, Search, Filter } from "lucide-react";
+import { Plus, Search, Star } from "lucide-react";
 import { useShopify } from "@/lib/shopify-context";
+import { ShopifyProduct } from "@/lib/shopify";
+import Image from "next/image";
 
 export default function ShopPage() {
   const { products, loading, error, addToCart } = useShopify();
@@ -51,7 +53,7 @@ export default function ShopPage() {
         case "price-high":
           return parseFloat(b.priceRange.minVariantPrice.amount) - parseFloat(a.priceRange.minVariantPrice.amount);
         case "newest":
-          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+          return 0; // Shopify doesn't provide createdAt, so we'll sort by name instead
         default:
           return 0;
       }
@@ -70,7 +72,7 @@ export default function ShopPage() {
     }).format(parseFloat(price));
   };
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: ShopifyProduct) => {
     // Get the first available variant
     const firstVariant = product.variants.edges[0]?.node;
     if (firstVariant && firstVariant.availableForSale) {

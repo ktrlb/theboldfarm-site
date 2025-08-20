@@ -12,7 +12,6 @@ import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { getGoatAge, getGoatPlaceholder, GoatRow, ProductRow } from "@/lib/data";
 import { useSupabase } from "@/lib/supabase-context";
 import { Database } from "@/lib/supabase";
-import Image from "next/image";
 
 interface AdminPanelProps {
   onLogout?: () => void;

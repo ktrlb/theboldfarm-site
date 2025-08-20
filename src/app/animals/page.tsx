@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Star, Egg, DollarSign, Award } from "lucide-react";
+import { Heart, Star, Egg, Award } from "lucide-react";
 import Link from "next/link";
 import { getGoatAge, getGoatPlaceholder } from "@/lib/data";
 import { useSupabase } from "@/lib/supabase-context";
