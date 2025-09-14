@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import { useShopify } from '@/lib/shopify-context';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ShoppingCart, X, Plus, Minus, Trash2 } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2 } from 'lucide-react';
 
 export function Cart() {
   const { cart, removeFromCart, updateCartItemQuantity, getCartTotal, getCartItemCount } = useShopify();

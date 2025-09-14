@@ -4,10 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { supabase, Database } from "./supabase";
 import { GoatRow, ProductRow, initialGoats, initialProducts } from "./data";
 
-type GoatInsert = Database['public']['Tables']['goats']['Insert'];
 type GoatUpdate = Database['public']['Tables']['goats']['Update'];
-
-type ProductInsert = Database['public']['Tables']['products']['Insert'];
 type ProductUpdate = Database['public']['Tables']['products']['Update'];
 
 interface SupabaseContextType {
