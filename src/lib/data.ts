@@ -138,12 +138,8 @@ export function getGoatPlaceholder(goat: GoatRow): string {
 
 // Helper function to check if a goat is for sale
 export function isGoatForSale(goat: GoatRow): boolean {
-  // Handle both new schema (is_for_sale) and old schema (price-based)
-  if ('is_for_sale' in goat) {
-    return goat.is_for_sale;
-  }
-  // Fallback for existing data without is_for_sale field
-  return goat.price !== null && goat.price > 0;
+  // Since we've updated the schema, all goats should have is_for_sale
+  return goat.is_for_sale;
 }
 
 // Helper function to get goats for sale
