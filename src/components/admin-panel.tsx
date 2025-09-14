@@ -118,7 +118,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   Add Goat
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl bg-white border-2 border-gray-200 shadow-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] bg-white border-2 border-gray-200 shadow-2xl overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold text-gray-900">Add New Goat</DialogTitle>
                   <DialogDescription className="text-gray-600">
@@ -138,7 +138,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   <div>
                     <h3 className="font-semibold">{goat.name}</h3>
                     <p className="text-sm text-gray-600">
-                      {goat.type} • {getGoatAge(goat)} • {goat.horn_status} • ${goat.price}
+                      {goat.type} • {getGoatAge(goat)} • {goat.horn_status} • {goat.is_for_sale ? `$${goat.price}` : 'Not for Sale'}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -199,7 +199,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   Add Product
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl bg-white border-2 border-gray-200 shadow-2xl">
+              <DialogContent className="max-w-2xl max-h-[90vh] bg-white border-2 border-gray-200 shadow-2xl overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold text-gray-900">Add New Product</DialogTitle>
                   <DialogDescription className="text-gray-600">
@@ -279,7 +279,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       {/* Edit Goat Dialog */}
       {editingGoat && (
         <Dialog open={!!editingGoat} onOpenChange={() => setEditingGoat(null)}>
-          <DialogContent className="max-w-2xl bg-white border-2 border-gray-200 shadow-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] bg-white border-2 border-gray-200 shadow-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-gray-900">Edit Goat</DialogTitle>
               <DialogDescription className="text-gray-600">
@@ -294,7 +294,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       {/* Edit Product Dialog */}
       {editingProduct && (
         <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
-          <DialogContent className="max-w-2xl bg-white border-2 border-gray-200 shadow-2xl">
+          <DialogContent className="max-w-2xl max-h-[90vh] bg-white border-2 border-gray-200 shadow-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-2xl font-bold text-gray-900">Edit Product</DialogTitle>
               <DialogDescription className="text-gray-600">
@@ -316,6 +316,7 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id
     birth_date: new Date().toISOString().split('T')[0], // Today's date as default
     birth_type: "exact" as 'exact' | 'year',
     price: 0,
+    is_for_sale: false,
     registered: false,
     horn_status: "Horned",
     dam: "",
@@ -323,6 +324,20 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id
     bio: "",
     status: "Available",
     photos: [] as string[]
+  } as {
+    name: string;
+    type: string;
+    birth_date: string;
+    birth_type: 'exact' | 'year';
+    price: number;
+    is_for_sale: boolean;
+    registered: boolean;
+    horn_status: string;
+    dam: string;
+    sire: string;
+    bio: string;
+    status: string;
+    photos: string[];
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -330,16 +345,21 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id
     onSubmit({
       name: formData.name,
       type: formData.type,
-      birth_date: formData.birth_date || null,
+      birth_date: formData.birth_date && formData.birth_date.trim() !== '' 
+        ? (formData.birth_type === 'year' 
+          ? `${String(formData.birth_date)}-01-01` // Convert year to full date
+          : String(formData.birth_date))
+        : null,
       birth_type: formData.birth_type,
-      price: formData.price,
+      price: Number(formData.price) || 0,
+      is_for_sale: formData.is_for_sale,
       registered: formData.registered,
       horn_status: formData.horn_status,
-      dam: formData.dam || null,
-      sire: formData.sire || null,
+      dam: formData.dam && formData.dam.trim() !== '' ? String(formData.dam) : null,
+      sire: formData.sire && formData.sire.trim() !== '' ? String(formData.sire) : null,
       bio: formData.bio,
       status: formData.status,
-      photos: formData.photos
+      photos: Array.isArray(formData.photos) ? formData.photos : []
     });
     setFormData({
       name: "",
@@ -347,6 +367,7 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id
       birth_date: new Date().toISOString().split('T')[0], // Today's date as default
       birth_type: "exact" as 'exact' | 'year',
       price: 0,
+      is_for_sale: false,
       registered: false,
       horn_status: "Horned",
       dam: "",
@@ -450,7 +471,7 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id
               min="1990"
               max={new Date().getFullYear()}
               value={formData.birth_date}
-              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, birth_date: e.target.value.toString() })}
               required
             />
           )}
@@ -463,9 +484,26 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id
           id="price"
           type="number"
           value={formData.price}
-          onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+          onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) || 0 })}
+          placeholder="Enter price"
           required
         />
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="is_for_sale"
+          checked={Boolean(formData.is_for_sale)}
+          onChange={(e) => {
+            console.log('Checkbox changed:', e.target.checked);
+            setFormData({ ...formData, is_for_sale: e.target.checked });
+          }}
+          className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+        />
+        <Label htmlFor="is_for_sale" className="text-sm font-medium text-gray-700">
+          This goat is for sale
+        </Label>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -569,9 +607,14 @@ function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (g
   const [formData, setFormData] = useState({
     name: goat.name,
     type: goat.type,
-    birth_date: goat.birth_date || "",
+    birth_date: goat.birth_date 
+      ? (goat.birth_type === 'year' 
+        ? goat.birth_date.substring(0, 4) // Extract year from date
+        : goat.birth_date)
+      : "",
     birth_type: goat.birth_type,
-    price: goat.price,
+    price: goat.price || 0,
+    is_for_sale: goat.is_for_sale || false,
     registered: goat.registered,
     horn_status: goat.horn_status,
     dam: goat.dam || "",
@@ -585,6 +628,7 @@ function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (g
     birth_date: string | null;
     birth_type: 'exact' | 'year';
     price: number;
+    is_for_sale: boolean;
     registered: boolean;
     horn_status: string;
     dam: string | null;
@@ -599,16 +643,21 @@ function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (g
     onSubmit({
       name: formData.name,
       type: formData.type,
-      birth_date: formData.birth_date || null,
+      birth_date: formData.birth_date && formData.birth_date.trim() !== '' 
+        ? (formData.birth_type === 'year' 
+          ? `${String(formData.birth_date)}-01-01` // Convert year to full date
+          : String(formData.birth_date))
+        : null,
       birth_type: formData.birth_type,
-      price: formData.price,
+      price: Number(formData.price) || 0,
+      is_for_sale: formData.is_for_sale,
       registered: formData.registered,
       horn_status: formData.horn_status,
-      dam: formData.dam || null,
-      sire: formData.sire || null,
+      dam: formData.dam && formData.dam.trim() !== '' ? String(formData.dam) : null,
+      sire: formData.sire && formData.sire.trim() !== '' ? String(formData.sire) : null,
       bio: formData.bio,
       status: formData.status,
-      photos: formData.photos
+      photos: Array.isArray(formData.photos) ? formData.photos : []
     });
     setFormData({
       name: "",
@@ -616,6 +665,7 @@ function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (g
       birth_date: new Date().toISOString().split('T')[0], // Today's date as default
       birth_type: "exact" as 'exact' | 'year',
       price: 0,
+      is_for_sale: false,
       registered: false,
       horn_status: "Horned",
       dam: "",
@@ -731,9 +781,26 @@ function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (g
           id="edit-price"
           type="number"
           value={formData.price}
-          onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+          onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) || 0 })}
+          placeholder="Enter price"
           required
         />
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="edit-is_for_sale"
+          checked={Boolean(formData.is_for_sale)}
+          onChange={(e) => {
+            console.log('Edit checkbox changed:', e.target.checked);
+            setFormData({ ...formData, is_for_sale: e.target.checked });
+          }}
+          className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+        />
+        <Label htmlFor="edit-is_for_sale" className="text-sm font-medium text-gray-700">
+          This goat is for sale
+        </Label>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -849,11 +916,11 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
     onSubmit({
       name: formData.name,
       category: formData.category,
-      price: formData.price,
+      price: Number(formData.price) || 0,
       description: formData.description,
       in_stock: formData.in_stock,
       featured: formData.featured,
-      photos: formData.photos
+      photos: Array.isArray(formData.photos) ? formData.photos : []
     });
     setFormData({
       name: "",
@@ -1014,11 +1081,11 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
     onSubmit({
       name: formData.name,
       category: formData.category,
-      price: formData.price,
+      price: Number(formData.price) || 0,
       description: formData.description,
       in_stock: formData.in_stock,
       featured: formData.featured,
-      photos: formData.photos
+      photos: Array.isArray(formData.photos) ? formData.photos : []
     });
     setFormData({
       name: "",

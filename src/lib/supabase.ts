@@ -20,6 +20,7 @@ export interface Database {
           birth_date: string | null
           birth_type: 'exact' | 'year'
           price: number
+          is_for_sale: boolean
           registered: boolean
           horn_status: string
           dam: string | null
@@ -37,6 +38,7 @@ export interface Database {
           birth_date?: string | null
           birth_type: 'exact' | 'year'
           price: number
+          is_for_sale: boolean
           registered: boolean
           horn_status: string
           dam?: string | null
@@ -54,6 +56,7 @@ export interface Database {
           birth_date?: string | null
           birth_type?: 'exact' | 'year'
           price?: number
+          is_for_sale?: boolean
           registered?: boolean
           horn_status?: string
           dam?: string | null

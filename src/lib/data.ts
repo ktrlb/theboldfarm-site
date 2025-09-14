@@ -132,5 +132,25 @@ export function getGoatPlaceholder(goat: GoatRow): string {
   return placeholders[index];
 }
 
+// Helper function to check if a goat is for sale
+export function isGoatForSale(goat: GoatRow): boolean {
+  // Handle both new schema (is_for_sale) and old schema (price-based)
+  if ('is_for_sale' in goat) {
+    return goat.is_for_sale;
+  }
+  // Fallback for existing data without is_for_sale field
+  return goat.price !== null && goat.price > 0;
+}
+
+// Helper function to get goats for sale
+export function getGoatsForSale(goats: GoatRow[]): GoatRow[] {
+  return goats.filter(isGoatForSale);
+}
+
+// Helper function to get all goats (for sale or not)
+export function getAllGoats(goats: GoatRow[]): GoatRow[] {
+  return goats;
+}
+
 // Export the Supabase types for use in other components
 export type { GoatRow, ProductRow };

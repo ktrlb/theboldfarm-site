@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, Calendar, Award } from "lucide-react";
 import Link from "next/link";
-import { getGoatAge, getGoatPlaceholder } from "@/lib/data";
+import { getGoatAge, getGoatPlaceholder, isGoatForSale, getGoatsForSale } from "@/lib/data";
 import { useSupabase } from "@/lib/supabase-context";
 import Image from "next/image";
 
@@ -15,7 +15,8 @@ import Image from "next/image";
 
 export default function GoatsPage() {
   const { goats, loading, error } = useSupabase();
-  const availableGoats = goats;
+  const allGoats = goats;
+  const goatsForSale = getGoatsForSale(goats);
 
   // Show loading state
   if (loading) {
@@ -127,19 +128,113 @@ export default function GoatsPage() {
         </div>
       </section>
 
+      {/* Goats for Sale */}
+      {goatsForSale.length > 0 && (
+        <section className="py-16 bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Goats for Sale</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                These goats are currently available for purchase. Each one comes with our quality guarantee 
+                and ongoing support.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {goatsForSale.map((goat) => (
+                <Card key={goat.id} className="hover:shadow-lg transition-shadow border-2 border-orange-200">
+                  <div className="h-64 bg-orange-100 rounded-t-lg overflow-hidden">
+                    {goat.photos && goat.photos.length > 0 ? (
+                      <div className="relative w-full h-full">
+                        <img
+                          src={goat.photos[0]}
+                          alt={`${goat.name}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {goat.photos && goat.photos.length > 1 && (
+                          <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                            +{goat.photos.length - 1} more
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-8xl">{getGoatPlaceholder(goat)}</div>
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <div className="flex justify-between items-start mb-2">
+                      <CardTitle className="text-xl">{goat.name}</CardTitle>
+                      <Badge 
+                        variant={goat.status === "Available" ? "default" : "secondary"}
+                        className="bg-orange-100 text-orange-800 hover:bg-orange-200"
+                      >
+                        {goat.status}
+                      </Badge>
+                    </div>
+                    <CardDescription className="text-base font-medium text-gray-700">
+                      {goat.type} • {getGoatAge(goat)} • {goat.horn_status}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        <span className="font-medium text-lg text-orange-600">${goat.price}</span>
+                      </div>
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Award className="h-4 w-4 mr-2" />
+                        <span>{goat.registered ? "Registered" : "Unregistered"}</span>
+                      </div>
+                      {goat.dam && goat.sire && (
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium">Dam:</span> {goat.dam} • <span className="font-medium">Sire:</span> {goat.sire}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                      {goat.bio}
+                    </p>
+
+                    {goat.status === "Available" ? (
+                      <div className="space-y-3">
+                        <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                          Place $100 Deposit
+                        </Button>
+                        <Button variant="outline" className="w-full">
+                          Contact About This Goat
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-2">
+                        <Badge variant="secondary" className="text-gray-600">
+                          Currently Reserved
+                        </Badge>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Available Goats */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Available Goats</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">All Our Goats</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Browse our current selection of available goats. Each one has been carefully 
-              selected and raised with love and attention.
+              Meet all the goats in our herd. Some are for sale, some are part of our breeding program, 
+              and some are beloved family members.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {availableGoats.map((goat) => (
+            {allGoats.map((goat) => (
               <Card key={goat.id} className="hover:shadow-lg transition-shadow">
                 <div className="h-64 bg-orange-100 rounded-t-lg overflow-hidden">
                   {goat.photos && goat.photos.length > 0 ? (
@@ -177,10 +272,16 @@ export default function GoatsPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-2" />
-                      <span className="font-medium">${goat.price}</span>
-                    </div>
+                    {isGoatForSale(goat) ? (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <DollarSign className="h-4 w-4 mr-2" />
+                        <span className="font-medium">${goat.price}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <span className="font-medium text-green-600">Not for Sale</span>
+                      </div>
+                    )}
                     <div className="flex items-center text-sm text-gray-600">
                       <Award className="h-4 w-4 mr-2" />
                       <span>{goat.registered ? "Registered" : "Unregistered"}</span>
@@ -196,7 +297,7 @@ export default function GoatsPage() {
                     {goat.bio}
                   </p>
 
-                  {goat.status === "Available" ? (
+                  {isGoatForSale(goat) && goat.status === "Available" ? (
                     <div className="space-y-3">
                       <Button className="w-full bg-orange-600 hover:bg-orange-700">
                         Place $100 Deposit
@@ -204,6 +305,12 @@ export default function GoatsPage() {
                       <Button variant="outline" className="w-full">
                         Contact About This Goat
                       </Button>
+                    </div>
+                  ) : goat.status === "Available" ? (
+                    <div className="text-center py-2">
+                      <Badge variant="secondary" className="text-gray-600">
+                        Not for Sale
+                      </Badge>
                     </div>
                   ) : (
                     <div className="text-center py-2">

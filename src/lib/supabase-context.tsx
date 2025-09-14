@@ -146,6 +146,9 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
   // Add a new goat
   const addGoat = async (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      // Clear any previous errors
+      setError(null);
+      
       if (!supabase) {
         // Fallback: add to local state
         const newGoat = { 
@@ -158,14 +161,41 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Prepare the goat data for insertion
+      const goatData = {
+        ...goat,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Inserting goat data:', goatData);
+      console.log('Data types:', {
+        name: typeof goatData.name,
+        type: typeof goatData.type,
+        birth_date: typeof goatData.birth_date,
+        birth_type: typeof goatData.birth_type,
+        price: typeof goatData.price,
+        is_for_sale: typeof goatData.is_for_sale,
+        registered: typeof goatData.registered,
+        horn_status: typeof goatData.horn_status,
+        dam: typeof goatData.dam,
+        sire: typeof goatData.sire,
+        bio: typeof goatData.bio,
+        status: typeof goatData.status,
+        photos: Array.isArray(goatData.photos) ? 'array' : typeof goatData.photos
+      });
+
       const { data, error } = await supabase
         .from('goats')
-        .insert([{ ...goat, updated_at: new Date().toISOString() }])
+        .insert([goatData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log('Goat added successfully:', data);
       setGoats(prev => [data, ...prev]);
     } catch (err) {
       console.error('Error adding goat:', err);
@@ -180,15 +210,28 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
         console.log('Supabase not configured, cannot update goat');
         return;
       }
+
+      // Prepare the update data
+      const updateData = {
+        ...updates,
+        updated_at: new Date().toISOString()
+      };
+
+      console.log('Updating goat with data:', updateData);
+
       const { data, error } = await supabase
         .from('goats')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        throw error;
+      }
 
+      console.log('Goat updated successfully:', data);
       setGoats(prev => prev.map(goat => goat.id === id ? data : goat));
     } catch (err) {
       console.error('Error updating goat:', err);
