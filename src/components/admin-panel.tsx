@@ -388,7 +388,6 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id
             id="name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            required
             className="border-gray-300 focus:border-orange-500 focus:ring-orange-500"
           />
         </div>
@@ -401,7 +400,10 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id
             <SelectContent>
               <SelectItem value="Dairy Doe">Dairy Doe</SelectItem>
               <SelectItem value="Breeding Buck">Breeding Buck</SelectItem>
-              <SelectItem value="Kid">Kid</SelectItem>
+              <SelectItem value="Doeling Kid">Doeling Kid</SelectItem>
+              <SelectItem value="Buckling Kid">Buckling Kid</SelectItem>
+              <SelectItem value="Wether">Wether</SelectItem>
+              <SelectItem value="Pet Only Doe">Pet Only Doe</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -698,7 +700,10 @@ function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (g
             <SelectContent>
               <SelectItem value="Dairy Doe">Dairy Doe</SelectItem>
               <SelectItem value="Breeding Buck">Breeding Buck</SelectItem>
-              <SelectItem value="Kid">Kid</SelectItem>
+              <SelectItem value="Doeling Kid">Doeling Kid</SelectItem>
+              <SelectItem value="Buckling Kid">Buckling Kid</SelectItem>
+              <SelectItem value="Wether">Wether</SelectItem>
+              <SelectItem value="Pet Only Doe">Pet Only Doe</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -829,7 +834,6 @@ function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (g
           value={formData.bio}
           onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
           rows={3}
-          required
         />
       </div>
 

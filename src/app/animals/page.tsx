@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,13 +12,48 @@ import { getGoatAge, getGoatPlaceholder } from "@/lib/data";
 import { useSupabase } from "@/lib/supabase-context";
 import Image from "next/image";
 
+// Filter options
+const FILTER_OPTIONS = [
+  { id: 'all', label: 'All Goats' },
+  { id: 'dairy_doe', label: 'Dairy Does' },
+  { id: 'breeding_buck', label: 'Breeding Bucks' },
+  { id: 'doeling_kid', label: 'Doeling Kids' },
+  { id: 'buckling_kid', label: 'Buckling Kids' },
+  { id: 'wether', label: 'Wethers' },
+  { id: 'pet_only_doe', label: 'Pet Only Does' }
+] as const;
+
+type FilterType = typeof FILTER_OPTIONS[number]['id'];
+
 export default function AnimalsPage() {
   const { goats, loading, error } = useSupabase();
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   
-  // Filter goats by type for display
-  const dairyDoes = goats.filter(goat => goat.type === "Dairy Doe" && goat.status === "Available");
-  const breedingBucks = goats.filter(goat => goat.type === "Breeding Buck" && goat.status === "Available");
-  const kids = goats.filter(goat => goat.type === "Kid" && goat.status === "Available");
+  // Filter logic for goats
+  const filteredGoats = useMemo(() => {
+    if (selectedFilter === 'all') {
+      return goats;
+    }
+
+    return goats.filter(goat => {
+      switch (selectedFilter) {
+        case 'dairy_doe':
+          return goat.type === 'Dairy Doe';
+        case 'breeding_buck':
+          return goat.type === 'Breeding Buck';
+        case 'doeling_kid':
+          return goat.type === 'Doeling Kid';
+        case 'buckling_kid':
+          return goat.type === 'Buckling Kid';
+        case 'wether':
+          return goat.type === 'Wether';
+        case 'pet_only_doe':
+          return goat.type === 'Pet Only Doe';
+        default:
+          return true;
+      }
+    });
+  }, [goats, selectedFilter]);
 
   // Show loading state
   if (loading) {
@@ -81,7 +117,7 @@ export default function AnimalsPage() {
       {/* Goats Section */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 rounded-full mb-6">
               <Heart className="h-10 w-10 text-orange-600" />
             </div>
@@ -92,163 +128,104 @@ export default function AnimalsPage() {
             </p>
           </div>
 
-          {/* Dairy Does */}
-          {dairyDoes.length > 0 && (
-            <div className="mb-12">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Dairy Does</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {dairyDoes.map((goat) => (
-                  <Card key={goat.id} className="hover:shadow-lg transition-shadow">
-                    <div className="h-48 bg-orange-100 rounded-t-lg overflow-hidden">
-                      {goat.photos && goat.photos.length > 0 ? (
-                        <img
-                          src={goat.photos[0]}
-                          alt={`${goat.name}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-6xl">{getGoatPlaceholder(goat)}</div>
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader>
-                      <div className="flex justify-between items-start mb-2">
-                        <CardTitle className="text-xl">{goat.name}</CardTitle>
-                        <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
-                          ${goat.price}
-                        </Badge>
-                      </div>
-                      <CardDescription className="text-base font-medium text-gray-700">
-                        {getGoatAge(goat)} • {goat.horn_status}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                        {goat.bio}
-                      </p>
-                      <div className="flex items-center text-sm text-gray-600 mb-3">
-                        <Award className="h-4 w-4 mr-2" />
-                        <span>{goat.registered ? "Registered" : "Unregistered"}</span>
-                      </div>
-                      <Button asChild className="w-full bg-orange-600 hover:bg-orange-700">
-                        <Link href="/goats">View Details</Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Filter Tags */}
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
+            {FILTER_OPTIONS.map((option) => (
+              <Button
+                key={option.id}
+                variant={selectedFilter === option.id ? "default" : "outline"}
+                onClick={() => setSelectedFilter(option.id)}
+                className={`px-6 py-2 rounded-full transition-all ${
+                  selectedFilter === option.id
+                    ? "bg-orange-600 text-white hover:bg-orange-700"
+                    : "border-orange-200 text-gray-700 hover:border-orange-300 hover:bg-orange-50"
+                }`}
+              >
+                {option.label}
+              </Button>
+            ))}
+          </div>
 
-          {/* Breeding Bucks */}
-          {breedingBucks.length > 0 && (
-            <div className="mb-12">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Breeding Bucks</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {breedingBucks.map((goat) => (
-                  <Card key={goat.id} className="hover:shadow-lg transition-shadow">
-                    <div className="h-48 bg-orange-100 rounded-t-lg overflow-hidden">
-                      {goat.photos && goat.photos.length > 0 ? (
-                        <img
-                          src={goat.photos[0]}
-                          alt={`${goat.name}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-6xl">{getGoatPlaceholder(goat)}</div>
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader>
-                      <div className="flex justify-between items-start mb-2">
-                        <CardTitle className="text-xl">{goat.name}</CardTitle>
-                        <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
-                          ${goat.price}
-                        </Badge>
-                      </div>
-                      <CardDescription className="text-base font-medium text-gray-700">
-                        {getGoatAge(goat)} • {goat.horn_status}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                        {goat.bio}
-                      </p>
-                      <div className="flex items-center text-sm text-gray-600 mb-3">
-                        <Award className="h-4 w-4 mr-2" />
-                        <span>{goat.registered ? "Registered" : "Unregistered"}</span>
-                      </div>
-                      <Button asChild className="w-full bg-orange-600 hover:bg-orange-700">
-                        <Link href="/goats">View Details</Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Results count */}
+          <div className="text-center mb-8">
+            <p className="text-gray-600">
+              Showing {filteredGoats.length} of {goats.length} goats
+              {selectedFilter !== 'all' && (
+                <span className="ml-2 text-orange-600 font-medium">
+                  • {FILTER_OPTIONS.find(opt => opt.id === selectedFilter)?.label}
+                </span>
+              )}
+            </p>
+          </div>
 
-          {/* Kids */}
-          {kids.length > 0 && (
-            <div className="mb-12">
-              <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-center">Kids</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {kids.map((goat) => (
-                  <Card key={goat.id} className="hover:shadow-lg transition-shadow">
-                    <div className="h-48 bg-orange-100 rounded-t-lg overflow-hidden">
-                      {goat.photos && goat.photos.length > 0 ? (
-                        <img
-                          src={goat.photos[0]}
-                          alt={`${goat.name}`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-6xl">{getGoatPlaceholder(goat)}</div>
-                        </div>
-                      )}
-                    </div>
-                    <CardHeader>
-                      <div className="flex justify-between items-start mb-2">
-                        <CardTitle className="text-xl">{goat.name}</CardTitle>
-                        <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
-                          ${goat.price}
-                        </Badge>
-                      </div>
-                      <CardDescription className="text-base font-medium text-gray-700">
-                        {getGoatAge(goat)} • {goat.horn_status}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                        {goat.bio}
-                      </p>
-                      <div className="flex items-center text-sm text-gray-600 mb-3">
-                        <Award className="h-4 w-4 mr-2" />
-                        <span>{goat.registered ? "Registered" : "Unregistered"}</span>
-                      </div>
-                      <Button asChild className="w-full bg-orange-600 hover:bg-orange-700">
-                        <Link href="/goats">View Details</Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Fallback if no goats available */}
-          {dairyDoes.length === 0 && breedingBucks.length === 0 && kids.length === 0 && (
+          {filteredGoats.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-6xl mb-4">🐐</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No Goats Currently Available</h3>
-              <p className="text-gray-600 mb-6">Check back soon for new arrivals!</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No goats found in this category</h3>
+              <p className="text-gray-600 mb-6">
+                Try selecting a different category to see our goats.
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => setSelectedFilter('all')}
+                className="border-orange-600 text-orange-600 hover:bg-orange-50"
+              >
+                Show All Goats
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredGoats.map((goat) => (
+                <Card key={goat.id} className="hover:shadow-lg transition-shadow">
+                  <div className="h-48 bg-orange-100 rounded-t-lg overflow-hidden">
+                    {goat.photos && goat.photos.length > 0 ? (
+                      <img
+                        src={goat.photos[0]}
+                        alt={`${goat.name}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-6xl">{getGoatPlaceholder(goat)}</div>
+                      </div>
+                    )}
+                  </div>
+                  <CardHeader>
+                    <div className="flex justify-between items-start mb-2">
+                      <CardTitle className="text-xl">{goat.name}</CardTitle>
+                      <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
+                        {goat.type}
+                      </Badge>
+                    </div>
+                    <CardDescription className="text-base font-medium text-gray-700">
+                      {getGoatAge(goat)} • {goat.horn_status}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                      {goat.bio}
+                    </p>
+                    <div className="flex items-center text-sm text-gray-600 mb-3">
+                      <Award className="h-4 w-4 mr-2" />
+                      <span>{goat.registered ? "Registered" : "Unregistered"}</span>
+                    </div>
+                    <div className="space-y-2">
+                      <Button asChild className="w-full bg-orange-600 hover:bg-orange-700">
+                        <Link href="/goats">View Details</Link>
+                      </Button>
+                      {goat.is_for_sale && (
+                        <Button asChild variant="outline" className="w-full">
+                          <Link href="/goats">Available for Sale</Link>
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
 
-          <div className="text-center">
+          <div className="text-center mt-12">
             <Button asChild size="lg" className="bg-orange-600 hover:bg-orange-700">
               <Link href="/goats">View All Goats</Link>
             </Button>

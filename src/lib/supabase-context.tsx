@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase, Database } from "./supabase";
-import { GoatRow, ProductRow, initialGoats, initialProducts } from "./data";
+import { GoatRow, ProductRow } from "./data";
 
 type GoatUpdate = Database['public']['Tables']['goats']['Update'];
 type ProductUpdate = Database['public']['Tables']['products']['Update'];
@@ -37,37 +37,9 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
 
       // Check if Supabase is available
       if (!supabase) {
-        console.log('Supabase not configured, using fallback data');
-        // Fallback to initial data if Supabase is not configured
-        setGoats(initialGoats.map((goat, index) => ({
-          id: index + 1,
-          name: goat.name,
-          type: goat.type,
-          birth_date: goat.birth_date,
-          birth_type: goat.birth_type,
-          price: goat.price,
-          is_for_sale: goat.is_for_sale,
-          registered: goat.registered,
-          horn_status: goat.horn_status,
-          dam: goat.dam,
-          sire: goat.sire,
-          bio: goat.bio,
-          status: goat.status,
-          photos: goat.photos,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })));
-        setProducts(initialProducts.map((product, index) => ({
-          id: index + 1,
-          name: product.name,
-          category: product.category,
-          price: product.price,
-          description: product.description,
-          in_stock: product.in_stock,
-          featured: product.featured,
-          photos: product.photos,
-          created_at: new Date().toISOString()
-        })));
+        console.error('Supabase not configured');
+        setError('Database connection not configured');
+        setLoading(false);
         return;
       }
 
@@ -106,37 +78,8 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
       console.error('Error fetching data:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
       setError(errorMessage);
-      
-      // Fallback to initial data if Supabase fails
-      setGoats(initialGoats.map((goat, index) => ({
-        id: index + 1,
-        name: goat.name,
-        type: goat.type,
-        birth_date: goat.birth_date,
-        birth_type: goat.birth_type,
-        price: goat.price,
-        is_for_sale: goat.is_for_sale,
-        registered: goat.registered,
-        horn_status: goat.horn_status,
-        dam: goat.dam,
-        sire: goat.sire,
-        bio: goat.bio,
-        status: goat.status,
-        photos: goat.photos,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })));
-      setProducts(initialProducts.map((product, index) => ({
-        id: index + 1,
-        name: product.name,
-        category: product.category,
-        price: product.price,
-        description: product.description,
-        in_stock: product.in_stock,
-        featured: product.featured,
-        photos: product.photos,
-        created_at: new Date().toISOString()
-      })));
+      setGoats([]);
+      setProducts([]);
     } finally {
       setLoading(false);
     }

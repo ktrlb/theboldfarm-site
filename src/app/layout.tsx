@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { SupabaseProvider } from "@/lib/supabase-context";
-import { ShopifyProvider } from "@/lib/shopify-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,9 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <SupabaseProvider>
-          <ShopifyProvider>
-            {children}
-          </ShopifyProvider>
+          {children}
         </SupabaseProvider>
         <Toaster />
       </body>

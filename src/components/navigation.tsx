@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Cart } from "@/components/cart";
 import Image from "next/image";
 
 const navigation = [
@@ -14,7 +13,6 @@ const navigation = [
   { name: "Goats for Sale", href: "/goats" },
   { name: "Shop", href: "/shop" },
   { name: "Contact", href: "/contact" },
-  { name: "Admin", href: "/admin" },
 ];
 
 export function Navigation() {
@@ -50,22 +48,21 @@ export function Navigation() {
                   {item.name}
                 </Link>
               ))}
+              
+              {/* Admin Link */}
+              <Link
+                href="/admin"
+                className="text-gray-500 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
+                title="Admin Panel"
+              >
+                <Settings className="h-4 w-4" />
+                <span className="sr-only">Admin Panel</span>
+              </Link>
             </div>
           </div>
 
-          {/* Cart */}
-          <div className="hidden md:block">
-            <Cart />
-          </div>
-
-          {/* Cart and Mobile menu button */}
-          <div className="flex items-center gap-2">
-            {/* Cart for mobile */}
-            <div className="md:hidden">
-              <Cart />
-            </div>
-            
-            {/* Mobile menu button */}
+          {/* Mobile menu button */}
+          <div className="flex items-center md:hidden">
             <Button
               variant="ghost"
               size="sm"
@@ -97,6 +94,18 @@ export function Navigation() {
                 {item.name}
               </Link>
             ))}
+            
+            {/* Admin Link for Mobile */}
+            <div className="border-t border-gray-200 pt-2 mt-2">
+              <Link
+                href="/admin"
+                className="text-gray-500 hover:text-orange-600 flex items-center px-3 py-2 rounded-md text-base font-medium transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Admin Panel
+              </Link>
+            </div>
           </div>
         </div>
       )}
