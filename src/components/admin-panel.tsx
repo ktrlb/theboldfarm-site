@@ -12,6 +12,7 @@ import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { getGoatAge, getGoatPlaceholder, GoatRow, ProductRow } from "@/lib/data";
 import { useSupabase } from "@/lib/database-context";
 import { Database } from "@/lib/supabase";
+import { PhotoUpload } from "@/components/photo-upload";
 
 interface AdminPanelProps {
   onLogout?: () => void;
@@ -532,55 +533,11 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id
 
       <div>
         <Label>Photos</Label>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => {
-                const files = Array.from(e.target.files || []);
-                const photoPromises = files.map(file => {
-                  return new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.readAsDataURL(file);
-                  });
-                });
-                
-                Promise.all(photoPromises).then(photos => {
-                  setFormData({ ...formData, photos: [...formData.photos, ...photos] });
-                });
-              }}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-            />
-          </div>
-          
-          {formData.photos.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {formData.photos.map((photo, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={photo}
-                    alt={`${formData.name} photo ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                  >
-                    ×
-                  </button>
-                  </div>
-              ))}
-            </div>
-          )}
-          
-          <p className="text-sm text-gray-500">
-            Upload multiple photos of your goat. If no photos are uploaded, cute placeholder images will be used.
-          </p>
-        </div>
+        <PhotoUpload 
+          photos={formData.photos}
+          onPhotosChange={(photos) => setFormData({ ...formData, photos })}
+          maxPhotos={10}
+        />
       </div>
 
       <div className="flex gap-2">
@@ -831,55 +788,11 @@ function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (g
 
       <div>
         <Label>Photos</Label>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => {
-                const files = Array.from(e.target.files || []);
-                const photoPromises = files.map(file => {
-                  return new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.readAsDataURL(file);
-                  });
-                });
-                
-                Promise.all(photoPromises).then(photos => {
-                  setFormData({ ...formData, photos: [...formData.photos, ...photos] });
-                });
-              }}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-            />
-          </div>
-          
-          {formData.photos.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {formData.photos.map((photo, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={photo}
-                    alt={`${formData.name} photo ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          <p className="text-sm text-gray-500">
-            Upload multiple photos of your goat. If no photos are uploaded, cute placeholder images will be used.
-          </p>
-        </div>
+        <PhotoUpload 
+          photos={formData.photos}
+          onPhotosChange={(photos) => setFormData({ ...formData, photos })}
+          maxPhotos={10}
+        />
       </div>
 
       <div className="flex gap-2">
