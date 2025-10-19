@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, Star, Egg, Award } from "lucide-react";
 import Link from "next/link";
 import { getGoatAge, getGoatPlaceholder } from "@/lib/data";
-import { useSupabase } from "@/lib/supabase-context";
+import { useSupabase } from "@/lib/database-context";
 import Image from "next/image";
 
 // Filter options

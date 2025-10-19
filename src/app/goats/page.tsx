@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { DollarSign, Calendar, Award } from "lucide-react";
 import Link from "next/link";
 import { getGoatAge, getGoatPlaceholder, isGoatForSale, getGoatsForSale } from "@/lib/data";
-import { useSupabase } from "@/lib/supabase-context";
+import { useSupabase } from "@/lib/database-context";
 import Image from "next/image";
 
 

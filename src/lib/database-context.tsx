@@ -21,62 +21,67 @@ interface SupabaseContextType {
   refreshData: () => Promise<void>;
 }
 
-const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined);
+const DatabaseContext = createContext<SupabaseContextType | undefined>(undefined);
 
-export function SupabaseProvider({ children }: { children: ReactNode }) {
+export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [goats, setGoats] = useState<GoatRow[]>([]);
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all data from Supabase
+  // Fetch all data from Neon (via API routes)
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Check if Supabase is available
-      if (!supabase) {
-        console.error('Supabase not configured');
-        setError('Database connection not configured');
+      // Skip during build/SSR
+      if (typeof window === 'undefined') {
         setLoading(false);
         return;
       }
 
-      console.log('Attempting to fetch data from Supabase...');
-      console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.log('Fetching data from Neon database...');
 
-      // Fetch goats
-      const { data: goatsData, error: goatsError } = await supabase
-        .from('goats')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Fetch from API routes that use Drizzle + Neon
+      const [goatsRes, productsRes] = await Promise.all([
+        fetch('/api/goats'),
+        fetch('/api/products')
+      ]);
 
-      if (goatsError) {
-        console.error('Error fetching goats:', goatsError);
-        throw goatsError;
+      if (!goatsRes.ok) {
+        throw new Error(`Failed to fetch goats: ${goatsRes.statusText}`);
       }
 
-      console.log('Goats fetched successfully:', goatsData);
-
-      // Fetch products
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (productsError) {
-        console.error('Error fetching products:', productsError);
-        throw productsError;
+      if (!productsRes.ok) {
+        throw new Error(`Failed to fetch products: ${productsRes.statusText}`);
       }
 
-      console.log('Products fetched successfully:', productsData);
+      const goatsData = await goatsRes.json();
+      const productsData = await productsRes.json();
+
+      console.log('Data fetched successfully from Neon:', {
+        goats: goatsData.length,
+        products: productsData.length
+      });
 
       setGoats(goatsData || []);
       setProducts(productsData || []);
     } catch (err) {
       console.error('Error fetching data:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
+      let errorMessage = 'Failed to fetch data';
+      
+      if (err && typeof err === 'object' && 'code' in err) {
+        const dbError = err as { code?: string; message?: string };
+        if (dbError.code === '57014') {
+          errorMessage = 'Database query timeout. Please check your database performance or contact support.';
+        } else if (dbError.message) {
+          errorMessage = dbError.message;
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       setGoats([]);
       setProducts([]);
@@ -279,7 +284,7 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <SupabaseContext.Provider value={{
+    <DatabaseContext.Provider value={{
       goats,
       products,
       loading,
@@ -293,14 +298,20 @@ export function SupabaseProvider({ children }: { children: ReactNode }) {
       refreshData,
     }}>
       {children}
-    </SupabaseContext.Provider>
+    </DatabaseContext.Provider>
   );
 }
 
-export function useSupabase() {
-  const context = useContext(SupabaseContext);
+// Export with both names for compatibility
+export const SupabaseProvider = DatabaseProvider;
+
+export function useDatabase() {
+  const context = useContext(DatabaseContext);
   if (context === undefined) {
-    throw new Error('useSupabase must be used within a SupabaseProvider');
+    throw new Error('useDatabase must be used within a DatabaseProvider');
   }
   return context;
 }
+
+// Export with old name for compatibility
+export const useSupabase = useDatabase;

@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { getGoatAge, getGoatPlaceholder, GoatRow, ProductRow } from "@/lib/data";
-import { useSupabase } from "@/lib/supabase-context";
+import { useSupabase } from "@/lib/database-context";
 import { Database } from "@/lib/supabase";
 
 interface AdminPanelProps {
@@ -216,19 +216,11 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
             {products.map((product) => (
               <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center gap-4">
-                  {/* Product Photo */}
+                  {/* Product Icon */}
                   <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                    {product.photos && product.photos.length > 0 ? (
-                      <img
-                        src={product.photos[0]}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-400 text-xs">No Photo</span>
-                      </div>
-                    )}
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-2xl">🛍️</span>
+                    </div>
                   </div>
                   
                   {/* Product Info */}
@@ -911,8 +903,7 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
     price: 0,
     description: "",
     in_stock: true,
-    featured: false,
-    photos: [] as string[]
+    featured: false
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -923,8 +914,7 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
       price: Number(formData.price) || 0,
       description: formData.description,
       in_stock: formData.in_stock,
-      featured: formData.featured,
-      photos: Array.isArray(formData.photos) ? formData.photos : []
+      featured: formData.featured
     });
     setFormData({
       name: "",
@@ -932,8 +922,7 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
       price: 0,
       description: "",
       in_stock: true,
-      featured: false,
-      photos: []
+      featured: false
     });
     onClose();
   };
@@ -994,59 +983,6 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
         />
       </div>
 
-      <div>
-        <Label>Photos</Label>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => {
-                const files = Array.from(e.target.files || []);
-                const photoPromises = files.map(file => {
-                  return new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.readAsDataURL(file);
-                  });
-                });
-                
-                Promise.all(photoPromises).then(photos => {
-                  setFormData({ ...formData, photos: [...formData.photos, ...photos] });
-                });
-              }}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-            />
-          </div>
-          
-          {formData.photos.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {formData.photos.map((photo, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={photo}
-                    alt={`${formData.name} photo ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          <p className="text-sm text-gray-500">
-            Upload multiple photos of your product. If no photos are uploaded, placeholder images will be used.
-          </p>
-        </div>
-      </div>
-
       <div className="flex gap-2">
         <Button type="submit" className="flex-1">
           <Save className="h-4 w-4 mr-2" />
@@ -1068,8 +1004,7 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
     price: product.price,
     description: product.description,
     in_stock: product.in_stock,
-    featured: product.featured,
-    photos: product.photos || []
+    featured: product.featured
   } as {
     name: string;
     category: string;
@@ -1077,7 +1012,6 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
     description: string;
     in_stock: boolean;
     featured: boolean;
-    photos: string[];
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1088,8 +1022,7 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
       price: Number(formData.price) || 0,
       description: formData.description,
       in_stock: formData.in_stock,
-      featured: formData.featured,
-      photos: Array.isArray(formData.photos) ? formData.photos : []
+      featured: formData.featured
     });
     setFormData({
       name: "",
@@ -1097,8 +1030,7 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
       price: 0,
       description: "",
       in_stock: true,
-      featured: false,
-      photos: []
+      featured: false
     });
     onClose();
   };
@@ -1157,59 +1089,6 @@ function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; 
           rows={3}
           required
         />
-      </div>
-
-      <div>
-        <Label>Photos</Label>
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => {
-                const files = Array.from(e.target.files || []);
-                const photoPromises = files.map(file => {
-                  return new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result as string);
-                    reader.readAsDataURL(file);
-                  });
-                });
-                
-                Promise.all(photoPromises).then(photos => {
-                  setFormData({ ...formData, photos: [...formData.photos, ...photos] });
-                });
-              }}
-              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-            />
-          </div>
-          
-          {formData.photos.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {formData.photos.map((photo, index) => (
-                <div key={index} className="relative group">
-                  <img
-                    src={photo}
-                    alt={`${formData.name} photo ${index + 1}`}
-                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, photos: formData.photos.filter((_, i) => i !== index) })}
-                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-          
-          <p className="text-sm text-gray-500">
-            Upload multiple photos of your product. If no photos are uploaded, placeholder images will be used.
-          </p>
-        </div>
       </div>
 
       <div className="flex gap-2">

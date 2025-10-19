@@ -11,9 +11,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     // Check if user is already authenticated
-    const authStatus = sessionStorage.getItem("adminAuthenticated");
-    if (authStatus === "true") {
-      setIsAuthenticated(true);
+    if (typeof window !== 'undefined') {
+      const authStatus = sessionStorage.getItem("adminAuthenticated");
+      if (authStatus === "true") {
+        setIsAuthenticated(true);
+      }
     }
   }, []);
 
