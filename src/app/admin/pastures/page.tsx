@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +16,9 @@ import {
   Eye
 } from "lucide-react";
 import { PastureProvider, usePasture } from "@/lib/pasture-context";
+import { PastureMapWrapper } from "@/components/pasture-map-wrapper";
+import type { PastureWithDetails } from "@/lib/pasture-types";
+import 'leaflet/dist/leaflet.css';
 
 function PastureManagementContent() {
   const { 
@@ -26,6 +30,7 @@ function PastureManagementContent() {
     getCurrentRotations,
     getActiveRestPeriods
   } = usePasture();
+  const [selectedPasture, setSelectedPasture] = useState<PastureWithDetails | null>(null);
 
   if (loading) {
     return (
@@ -267,16 +272,16 @@ function PastureManagementContent() {
             <CardHeader>
               <CardTitle>Property Map</CardTitle>
               <CardDescription>
-                Visual representation of your pastures (Coming soon: Interactive map editor)
+                Visual representation of your pastures with real-time status
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="bg-gray-100 rounded-lg h-96 flex items-center justify-center">
-                <div className="text-center text-gray-500">
-                  <MapPin className="h-12 w-12 mx-auto mb-2" />
-                  <p>Interactive map view coming soon!</p>
-                  <p className="text-sm mt-2">You'll be able to draw your pastures and see real-time status</p>
-                </div>
+              <div className="h-[600px] w-full">
+                <PastureMapWrapper 
+                  pastures={pastures}
+                  onPastureClick={(pasture) => setSelectedPasture(pasture)}
+                  mode="view"
+                />
               </div>
             </CardContent>
           </Card>

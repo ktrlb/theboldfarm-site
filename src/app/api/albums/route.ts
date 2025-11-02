@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
-import { goats } from '@/lib/db/schema';
+import { imageAlbums } from '@/lib/db/schema';
 
 export async function GET() {
   try {
@@ -11,13 +11,13 @@ export async function GET() {
       );
     }
 
-    const allGoats = await db.select().from(goats);
+    const allAlbums = await db.select().from(imageAlbums);
     
-    return NextResponse.json(allGoats);
+    return NextResponse.json(allAlbums);
   } catch (error) {
-    console.error('Error fetching goats:', error);
+    console.error('Error fetching albums:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch goats' },
+      { error: 'Failed to fetch albums' },
       { status: 500 }
     );
   }
@@ -33,16 +33,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const [newGoat] = await db.insert(goats).values(body).returning();
+    const [newAlbum] = await db.insert(imageAlbums).values(body).returning();
     
-    return NextResponse.json(newGoat);
+    return NextResponse.json(newAlbum);
   } catch (error) {
-    console.error('Error creating goat:', error);
+    console.error('Error creating album:', error);
     return NextResponse.json(
-      { error: 'Failed to create goat' },
+      { error: 'Failed to create album' },
       { status: 500 }
     );
   }
 }
-
-

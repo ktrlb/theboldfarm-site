@@ -18,6 +18,7 @@ export interface Pasture {
   fencing_type: string | null;
   fencing_condition: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Needs Repair' | null;
   notes: string | null;
+  custom_fields: Record<string, string | number | boolean | null> | null; // Custom user-defined fields
   is_active: boolean;
   created_at: string;
   updated_at: string;

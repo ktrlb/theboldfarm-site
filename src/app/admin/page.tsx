@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
-import { AdminPanel } from "@/components/admin-panel";
+import { AdminDashboard } from "@/components/admin-dashboard";
 import { AdminAuth } from "@/components/admin-auth";
 
 export default function AdminPage() {
@@ -46,7 +46,7 @@ export default function AdminPage() {
           </button>
         </div>
       </div>
-      <AdminPanel onLogout={handleLogout} />
+      <AdminDashboard onLogout={handleLogout} />
       <Footer />
     </div>
   );

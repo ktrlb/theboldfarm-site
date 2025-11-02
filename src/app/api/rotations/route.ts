@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
-import { goats } from '@/lib/db/schema';
+import { grazingRotations } from '@/lib/db/schema';
+import { desc } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -11,13 +12,16 @@ export async function GET() {
       );
     }
 
-    const allGoats = await db.select().from(goats);
+    const allRotations = await db
+      .select()
+      .from(grazingRotations)
+      .orderBy(desc(grazingRotations.start_date));
     
-    return NextResponse.json(allGoats);
+    return NextResponse.json(allRotations);
   } catch (error) {
-    console.error('Error fetching goats:', error);
+    console.error('Error fetching rotations:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch goats' },
+      { error: 'Failed to fetch rotations' },
       { status: 500 }
     );
   }
@@ -33,16 +37,15 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const [newGoat] = await db.insert(goats).values(body).returning();
+    const [newRotation] = await db.insert(grazingRotations).values(body).returning();
     
-    return NextResponse.json(newGoat);
+    return NextResponse.json(newRotation);
   } catch (error) {
-    console.error('Error creating goat:', error);
+    console.error('Error creating rotation:', error);
     return NextResponse.json(
-      { error: 'Failed to create goat' },
+      { error: 'Failed to create rotation' },
       { status: 500 }
     );
   }
 }
-
 

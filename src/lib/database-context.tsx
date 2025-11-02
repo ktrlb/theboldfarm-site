@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase, Database } from "./supabase";
+import { Database } from "./supabase";
 import { GoatRow, ProductRow } from "./data";
 
 type GoatUpdate = Database['public']['Tables']['goats']['Update'];
@@ -93,183 +93,131 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   // Add a new goat
   const addGoat = async (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      // Clear any previous errors
       setError(null);
-      
-      if (!supabase) {
-        // Fallback: add to local state
-        const newGoat = { 
-          ...goat, 
-          id: Date.now(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        setGoats(prev => [newGoat, ...prev]);
-        return;
-      }
 
-      // Prepare the goat data for insertion
-      const goatData = {
-        ...goat,
-        updated_at: new Date().toISOString()
-      };
-
-      console.log('Inserting goat data:', goatData);
-      console.log('Data types:', {
-        name: typeof goatData.name,
-        type: typeof goatData.type,
-        birth_date: typeof goatData.birth_date,
-        birth_type: typeof goatData.birth_type,
-        price: typeof goatData.price,
-        is_for_sale: typeof goatData.is_for_sale,
-        registered: typeof goatData.registered,
-        horn_status: typeof goatData.horn_status,
-        dam: typeof goatData.dam,
-        sire: typeof goatData.sire,
-        bio: typeof goatData.bio,
-        status: typeof goatData.status,
-        photos: Array.isArray(goatData.photos) ? 'array' : typeof goatData.photos
+      const res = await fetch('/api/goats', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(goat),
       });
 
-      const { data, error } = await supabase
-        .from('goats')
-        .insert([goatData])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Supabase error:', error);
-        throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to create goat');
       }
 
-      console.log('Goat added successfully:', data);
-      setGoats(prev => [data, ...prev]);
+      const data = await res.json();
+      await fetchData(); // Refresh all data
     } catch (err) {
       console.error('Error adding goat:', err);
       setError(err instanceof Error ? err.message : 'Failed to add goat');
+      throw err;
     }
   };
 
   // Update an existing goat
   const updateGoat = async (id: number, updates: Partial<GoatUpdate>) => {
     try {
-      if (!supabase) {
-        console.log('Supabase not configured, cannot update goat');
-        return;
+      const res = await fetch(`/api/goats/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update goat');
       }
 
-      // Prepare the update data
-      const updateData = {
-        ...updates,
-        updated_at: new Date().toISOString()
-      };
-
-      console.log('Updating goat with data:', updateData);
-
-      const { data, error } = await supabase
-        .from('goats')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Supabase update error:', error);
-        throw error;
-      }
-
-      console.log('Goat updated successfully:', data);
-      setGoats(prev => prev.map(goat => goat.id === id ? data : goat));
+      await fetchData(); // Refresh all data
     } catch (err) {
       console.error('Error updating goat:', err);
       setError(err instanceof Error ? err.message : 'Failed to update goat');
+      throw err;
     }
   };
 
   // Delete a goat
   const deleteGoat = async (id: number) => {
     try {
-      if (!supabase) {
-        console.log('Supabase not configured, cannot delete goat');
-        return;
+      const res = await fetch(`/api/goats/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete goat');
       }
-      const { error } = await supabase
-        .from('goats')
-        .delete()
-        .eq('id', id);
 
-      if (error) throw error;
-
-      setGoats(prev => prev.filter(goat => goat.id !== id));
+      await fetchData(); // Refresh all data
     } catch (err) {
       console.error('Error deleting goat:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete goat');
+      throw err;
     }
   };
 
   // Add a new product
   const addProduct = async (product: Omit<ProductRow, 'id' | 'created_at'>) => {
     try {
-      if (!supabase) {
-        console.log('Supabase not configured, cannot add product');
-        return;
+      const res = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to create product');
       }
-      const { data, error } = await supabase
-        .from('products')
-        .insert([product])
-        .select()
-        .single();
 
-      if (error) throw error;
-
-      setProducts(prev => [data, ...prev]);
+      await fetchData(); // Refresh all data
     } catch (err) {
       console.error('Error adding product:', err);
       setError(err instanceof Error ? err.message : 'Failed to add product');
+      throw err;
     }
   };
 
   // Update an existing product
   const updateProduct = async (id: number, updates: Partial<ProductUpdate>) => {
     try {
-      if (!supabase) {
-        console.log('Supabase not configured, cannot update product');
-        return;
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update product');
       }
-      const { data, error } = await supabase
-        .from('products')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
 
-      if (error) throw error;
-
-      setProducts(prev => prev.map(product => product.id === id ? data : product));
+      await fetchData(); // Refresh all data
     } catch (err) {
       console.error('Error updating product:', err);
       setError(err instanceof Error ? err.message : 'Failed to update product');
+      throw err;
     }
   };
 
   // Delete a product
   const deleteProduct = async (id: number) => {
     try {
-      if (!supabase) {
-        console.log('Supabase not configured, cannot delete product');
-        return;
+      const res = await fetch(`/api/products/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete product');
       }
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
 
-      if (error) throw error;
-
-      setProducts(prev => prev.filter(product => product.id !== id));
+      await fetchData(); // Refresh all data
     } catch (err) {
       console.error('Error deleting product:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete product');
+      throw err;
     }
   };
 

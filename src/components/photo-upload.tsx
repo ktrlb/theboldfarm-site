@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
-import { Button } from "./ui/button";
 
 interface PhotoUploadProps {
   photos: string[];
@@ -10,13 +9,37 @@ interface PhotoUploadProps {
   maxPhotos?: number;
 }
 
+interface UploadProgress {
+  fileName: string;
+  status: 'compressing' | 'uploading' | 'complete' | 'error';
+  error?: string;
+}
+
 export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
+  const [currentProcessing, setCurrentProcessing] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadPhoto = async (file: File): Promise<string> => {
+  const uploadPhoto = async (file: File, progressIndex: number): Promise<string> => {
+    // Update progress to show compression
+    setUploadProgress(prev => {
+      const updated = [...prev];
+      updated[progressIndex] = { fileName: file.name, status: 'compressing' };
+      return updated;
+    });
+    setCurrentProcessing(file.name);
+
     const formData = new FormData();
     formData.append('file', file);
+
+    // Update progress to show uploading
+    setUploadProgress(prev => {
+      const updated = [...prev];
+      updated[progressIndex] = { fileName: file.name, status: 'uploading' };
+      return updated;
+    });
 
     const response = await fetch('/api/upload-photo', {
       method: 'POST',
@@ -24,11 +47,26 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
     });
 
     if (!response.ok) {
-      throw new Error('Upload failed');
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error || 'Upload failed';
+      setUploadProgress(prev => {
+        const updated = [...prev];
+        updated[progressIndex] = { fileName: file.name, status: 'error', error: errorMessage };
+        return updated;
+      });
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
-    return data.url;
+    const { url } = await response.json();
+    
+    // Mark as complete
+    setUploadProgress(prev => {
+      const updated = [...prev];
+      updated[progressIndex] = { fileName: file.name, status: 'complete' };
+      return updated;
+    });
+    
+    return url;
   };
 
   const handleFiles = async (files: FileList | File[]) => {
@@ -46,15 +84,44 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
     }
 
     setUploading(true);
+    setUploadProgress(imageFiles.map(file => ({ fileName: file.name, status: 'compressing' as const })));
 
     try {
-      const uploadPromises = imageFiles.map(file => uploadPhoto(file));
-      const urls = await Promise.all(uploadPromises);
-      onPhotosChange([...photos, ...urls]);
+      // Process files one at a time to show progress
+      const urls: string[] = [];
+      for (let i = 0; i < imageFiles.length; i++) {
+        const file = imageFiles[i];
+        try {
+          const url = await uploadPhoto(file, i);
+          urls.push(url);
+        } catch (error) {
+          console.error(`Error uploading ${file.name}:`, error);
+          // Continue with other files even if one fails
+        }
+      }
+      
+      // Clear current processing after all files are done
+      setCurrentProcessing(null);
+
+      if (urls.length > 0) {
+        onPhotosChange([...photos, ...urls]);
+      }
+
+      // Clear progress after a short delay to show completion
+      setTimeout(() => {
+        setUploadProgress([]);
+        setCurrentProcessing(null);
+      }, 2000);
     } catch (error) {
       console.error('Error uploading photos:', error);
-      alert('Failed to upload photos. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload photos';
+      alert(errorMessage);
+      // Ensure uploading state is cleared on error
+      setUploading(false);
+      setUploadProgress([]);
+      setCurrentProcessing(null);
     } finally {
+      // Always ensure uploading is false
       setUploading(false);
     }
   };
@@ -69,7 +136,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
         handleFiles(e.dataTransfer.files);
       }
     },
-    [photos, maxPhotos]
+    [] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -113,26 +180,75 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
+        onClick={(e) => {
+          if (!uploading && fileInputRef.current) {
+            e.preventDefault();
+            fileInputRef.current.click();
+          }
+        }}
         className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           dragActive
             ? 'border-orange-500 bg-orange-50'
             : 'border-gray-300 hover:border-gray-400'
-        } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+        } ${uploading ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
       >
         <input
+          ref={fileInputRef}
           type="file"
           multiple
           accept="image/*"
           onChange={handleChange}
           disabled={uploading}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          className="hidden"
         />
 
         <div className="space-y-2">
           {uploading ? (
             <>
               <Loader2 className="h-12 w-12 text-orange-600 mx-auto animate-spin" />
-              <p className="text-sm text-gray-600">Uploading photos...</p>
+              {currentProcessing && (
+                <>
+                  <p className="text-sm font-medium text-gray-900">Processing {currentProcessing}</p>
+                  <p className="text-xs text-gray-600">
+                    Compressing and optimizing image...
+                  </p>
+                </>
+              )}
+              {!currentProcessing && (
+                <p className="text-sm text-gray-600">Processing photos...</p>
+              )}
+              {uploadProgress.length > 0 && (
+                <div className="mt-4 space-y-2 max-h-32 overflow-y-auto">
+                  {uploadProgress.map((progress, index) => (
+                    <div key={index} className="text-xs text-gray-600">
+                      {progress.status === 'compressing' && (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-3 w-3 animate-spin text-orange-600" />
+                          <span>Compressing {progress.fileName}...</span>
+                        </div>
+                      )}
+                      {progress.status === 'uploading' && (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+                          <span>Uploading {progress.fileName}...</span>
+                        </div>
+                      )}
+                      {progress.status === 'complete' && (
+                        <div className="flex items-center gap-2 text-green-600">
+                          <span>✓</span>
+                          <span>{progress.fileName} uploaded</span>
+                        </div>
+                      )}
+                      {progress.status === 'error' && (
+                        <div className="flex items-center gap-2 text-red-600">
+                          <span>✗</span>
+                          <span>{progress.fileName} failed</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -142,7 +258,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
                 drag and drop
               </div>
               <p className="text-xs text-gray-500">
-                PNG, JPG, GIF up to 10MB ({photos.length}/{maxPhotos} photos)
+                PNG, JPG, GIF up to 50MB - auto-resized to 2MB ({photos.length}/{maxPhotos} photos)
               </p>
             </>
           )}

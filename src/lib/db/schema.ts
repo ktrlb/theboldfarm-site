@@ -47,6 +47,7 @@ export const pastures = pgTable('pastures', {
   fencing_type: text('fencing_type'),
   fencing_condition: text('fencing_condition'),
   notes: text('notes'),
+  custom_fields: json('custom_fields'),
   is_active: boolean('is_active').notNull().default(true),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -119,6 +120,16 @@ export const propertyMap = pgTable('property_map', {
   updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Image albums table
+export const imageAlbums = pgTable('image_albums', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  name: text('name').notNull(),
+  description: text('description'),
+  images: text('images').array().notNull().default([]),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 // Export types for use in components
 export type Goat = typeof goats.$inferSelect;
 export type NewGoat = typeof goats.$inferInsert;
@@ -134,6 +145,8 @@ export type PastureRestPeriod = typeof pastureRestPeriods.$inferSelect;
 export type NewPastureRestPeriod = typeof pastureRestPeriods.$inferInsert;
 export type PropertyMap = typeof propertyMap.$inferSelect;
 export type NewPropertyMap = typeof propertyMap.$inferInsert;
+export type ImageAlbum = typeof imageAlbums.$inferSelect;
+export type NewImageAlbum = typeof imageAlbums.$inferInsert;
 
 
 

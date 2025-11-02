@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "./supabase";
 import type { 
   Pasture, 
   GrazingRotation, 
@@ -55,75 +54,51 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Skip data fetching during SSR
+  const isClient = typeof window !== 'undefined';
+
   // Fetch all data
   const fetchData = async () => {
+    if (!isClient) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
-      if (!supabase) {
-        console.error('Supabase not configured');
-        setError('Database connection not configured');
-        setLoading(false);
-        return;
-      }
+      // Fetch all data in parallel
+      const [pasturesRes, rotationsRes, observationsRes, restPeriodsRes] = await Promise.all([
+        fetch('/api/pastures'),
+        fetch('/api/rotations'),
+        fetch('/api/observations'),
+        fetch('/api/rest-periods'),
+      ]);
 
-      // Fetch pastures
-      const { data: pasturesData, error: pasturesError } = await supabase
-        .from('pastures')
-        .select('*')
-        .order('name', { ascending: true });
+      if (!pasturesRes.ok) throw new Error('Failed to fetch pastures');
+      if (!rotationsRes.ok) throw new Error('Failed to fetch rotations');
+      if (!observationsRes.ok) throw new Error('Failed to fetch observations');
+      if (!restPeriodsRes.ok) throw new Error('Failed to fetch rest periods');
 
-      if (pasturesError) throw pasturesError;
-
-      // Fetch rotations
-      const { data: rotationsData, error: rotationsError } = await supabase
-        .from('grazing_rotations')
-        .select('*')
-        .order('start_date', { ascending: false });
-
-      if (rotationsError) throw rotationsError;
-
-      // Fetch observations
-      const { data: observationsData, error: observationsError } = await supabase
-        .from('pasture_observations')
-        .select('*')
-        .order('observation_date', { ascending: false });
-
-      if (observationsError) throw observationsError;
-
-      // Fetch rest periods
-      const { data: restPeriodsData, error: restPeriodsError } = await supabase
-        .from('pasture_rest_periods')
-        .select('*')
-        .order('start_date', { ascending: false });
-
-      if (restPeriodsError) throw restPeriodsError;
-
-      // Fetch property map
-      const { data: propertyMapData, error: propertyMapError } = await supabase
-        .from('property_map')
-        .select('*')
-        .limit(1)
-        .single();
-
-      if (propertyMapError && propertyMapError.code !== 'PGRST116') {
-        console.error('Property map error:', propertyMapError);
-      }
+      const pasturesData: Pasture[] = await pasturesRes.json();
+      const rotationsData: GrazingRotation[] = await rotationsRes.json();
+      const observationsData: PastureObservation[] = await observationsRes.json();
+      const restPeriodsData: PastureRestPeriod[] = await restPeriodsRes.json();
 
       // Enrich pastures with related data
-      const enrichedPastures: PastureWithDetails[] = (pasturesData || []).map(pasture => {
-        const currentRotation = (rotationsData || []).find(
+      const enrichedPastures: PastureWithDetails[] = pasturesData.map(pasture => {
+        const currentRotation = rotationsData.find(
           r => r.pasture_id === pasture.id && r.is_current
         );
         
-        const activeRestPeriod = (restPeriodsData || []).find(
+        const activeRestPeriod = restPeriodsData.find(
           rp => rp.pasture_id === pasture.id && rp.is_active
         );
 
-        const lastObservation = (observationsData || []).find(
-          obs => obs.pasture_id === pasture.id
-        );
+        const lastObservation = observationsData
+          .filter(obs => obs.pasture_id === pasture.id)
+          .sort((a, b) => new Date(b.observation_date).getTime() - new Date(a.observation_date).getTime())[0];
 
         let daysResting = undefined;
         if (activeRestPeriod) {
@@ -142,10 +117,11 @@ export function PastureProvider({ children }: { children: ReactNode }) {
       });
 
       setPastures(enrichedPastures);
-      setRotations(rotationsData || []);
-      setObservations(observationsData || []);
-      setRestPeriods(restPeriodsData || []);
-      setPropertyMap(propertyMapData || null);
+      setRotations(rotationsData);
+      setObservations(observationsData);
+      setRestPeriods(restPeriodsData);
+      // Note: property_map table not implemented yet, leave as null
+      setPropertyMap(null);
     } catch (err) {
       console.error('Error fetching pasture data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch pasture data');
@@ -157,15 +133,16 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   // Add pasture
   const addPasture = async (pasture: Omit<Pasture, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      if (!supabase) throw new Error('Supabase not configured');
+      const res = await fetch('/api/pastures', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pasture),
+      });
 
-      const { error } = await supabase
-        .from('pastures')
-        .insert([pasture])
-        .select()
-        .single();
-
-      if (error) throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to create pasture');
+      }
 
       await fetchData(); // Refresh all data
     } catch (err) {
@@ -177,14 +154,16 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   // Update pasture
   const updatePasture = async (id: number, updates: Partial<Pasture>) => {
     try {
-      if (!supabase) throw new Error('Supabase not configured');
+      const res = await fetch(`/api/pastures/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
 
-      const { error } = await supabase
-        .from('pastures')
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update pasture');
+      }
 
       await fetchData();
     } catch (err) {
@@ -196,14 +175,14 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   // Delete pasture
   const deletePasture = async (id: number) => {
     try {
-      if (!supabase) throw new Error('Supabase not configured');
+      const res = await fetch(`/api/pastures/${id}`, {
+        method: 'DELETE',
+      });
 
-      const { error } = await supabase
-        .from('pastures')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to delete pasture');
+      }
 
       await fetchData();
     } catch (err) {
@@ -215,23 +194,33 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   // Add rotation
   const addRotation = async (rotation: Omit<GrazingRotation, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      if (!supabase) throw new Error('Supabase not configured');
-
       // If this is a current rotation, mark others as not current
       if (rotation.is_current) {
-        await supabase
-          .from('grazing_rotations')
-          .update({ is_current: false })
-          .eq('pasture_id', rotation.pasture_id);
+        // Get all current rotations for this pasture and update them
+        const currentRotations = rotations.filter(
+          r => r.pasture_id === rotation.pasture_id && r.is_current
+        );
+        await Promise.all(
+          currentRotations.map(r => 
+            fetch(`/api/rotations/${r.id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ is_current: false }),
+            })
+          )
+        );
       }
 
-      const { error } = await supabase
-        .from('grazing_rotations')
-        .insert([rotation])
-        .select()
-        .single();
+      const res = await fetch('/api/rotations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rotation),
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to create rotation');
+      }
 
       await fetchData();
     } catch (err) {
@@ -243,14 +232,16 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   // Update rotation
   const updateRotation = async (id: number, updates: Partial<GrazingRotation>) => {
     try {
-      if (!supabase) throw new Error('Supabase not configured');
+      const res = await fetch(`/api/rotations/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
 
-      const { error } = await supabase
-        .from('grazing_rotations')
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to update rotation');
+      }
 
       await fetchData();
     } catch (err) {
@@ -262,18 +253,20 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   // End rotation
   const endRotation = async (id: number, endDate: string, qualityEnd: number) => {
     try {
-      if (!supabase) throw new Error('Supabase not configured');
-
-      const { error } = await supabase
-        .from('grazing_rotations')
-        .update({
+      const res = await fetch(`/api/rotations/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           end_date: endDate,
           pasture_quality_end: qualityEnd,
-          is_current: false
-        })
-        .eq('id', id);
+          is_current: false,
+        }),
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to end rotation');
+      }
 
       await fetchData();
     } catch (err) {
@@ -285,15 +278,16 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   // Add observation
   const addObservation = async (observation: Omit<PastureObservation, 'id' | 'created_at'>) => {
     try {
-      if (!supabase) throw new Error('Supabase not configured');
+      const res = await fetch('/api/observations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(observation),
+      });
 
-      const { error } = await supabase
-        .from('pasture_observations')
-        .insert([observation])
-        .select()
-        .single();
-
-      if (error) throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to create observation');
+      }
 
       await fetchData();
     } catch (err) {
@@ -305,15 +299,16 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   // Start rest period
   const startRestPeriod = async (restPeriod: Omit<PastureRestPeriod, 'id' | 'created_at' | 'updated_at'>) => {
     try {
-      if (!supabase) throw new Error('Supabase not configured');
+      const res = await fetch('/api/rest-periods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(restPeriod),
+      });
 
-      const { error } = await supabase
-        .from('pasture_rest_periods')
-        .insert([restPeriod])
-        .select()
-        .single();
-
-      if (error) throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to start rest period');
+      }
 
       await fetchData();
     } catch (err) {
@@ -325,17 +320,19 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   // End rest period
   const endRestPeriod = async (id: number, actualEndDate: string) => {
     try {
-      if (!supabase) throw new Error('Supabase not configured');
-
-      const { error } = await supabase
-        .from('pasture_rest_periods')
-        .update({
+      const res = await fetch(`/api/rest-periods/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           actual_end_date: actualEndDate,
-          is_active: false
-        })
-        .eq('id', id);
+          is_active: false,
+        }),
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to end rest period');
+      }
 
       await fetchData();
     } catch (err) {
@@ -359,7 +356,9 @@ export function PastureProvider({ children }: { children: ReactNode }) {
 
   // Initial data fetch
   useEffect(() => {
-    fetchData();
+    if (isClient) {
+      fetchData();
+    }
   }, []);
 
   return (
@@ -397,5 +396,3 @@ export function usePasture() {
   }
   return context;
 }
-
-

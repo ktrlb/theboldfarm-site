@@ -302,7 +302,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   );
 }
 
-function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => void; onClose: () => void }) {
+export function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => void; onClose: () => void }) {
   const [formData, setFormData] = useState({
     name: "",
     type: "",
@@ -554,7 +554,7 @@ function AddGoatForm({ onSubmit, onClose }: { onSubmit: (goat: Omit<GoatRow, 'id
   );
 }
 
-function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (goat: Database['public']['Tables']['goats']['Update']) => void; onClose: () => void }) {
+export function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (goat: Database['public']['Tables']['goats']['Update']) => void; onClose: () => void }) {
   const [formData, setFormData] = useState({
     name: goat.name,
     type: goat.type,
@@ -809,7 +809,7 @@ function EditGoatForm({ goat, onSubmit, onClose }: { goat: GoatRow; onSubmit: (g
   );
 }
 
-function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<ProductRow, 'id' | 'created_at'>) => void; onClose: () => void }) {
+export function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<ProductRow, 'id' | 'created_at'>) => void; onClose: () => void }) {
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -910,7 +910,7 @@ function AddProductForm({ onSubmit, onClose }: { onSubmit: (product: Omit<Produc
   );
 }
 
-function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; onSubmit: (product: Database['public']['Tables']['products']['Update']) => void; onClose: () => void }) {
+export function EditProductForm({ product, onSubmit, onClose }: { product: ProductRow; onSubmit: (product: Database['public']['Tables']['products']['Update']) => void; onClose: () => void }) {
   const [formData, setFormData] = useState({
     name: product.name,
     category: product.category,
