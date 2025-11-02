@@ -30,7 +30,6 @@ function PastureManagementContent() {
     getCurrentRotations,
     getActiveRestPeriods
   } = usePasture();
-  const [selectedPasture, setSelectedPasture] = useState<PastureWithDetails | null>(null);
 
   if (loading) {
     return (
@@ -279,7 +278,6 @@ function PastureManagementContent() {
               <div className="h-[600px] w-full">
                 <PastureMapWrapper 
                   pastures={pastures}
-                  onPastureClick={(pasture) => setSelectedPasture(pasture)}
                   mode="view"
                 />
               </div>
