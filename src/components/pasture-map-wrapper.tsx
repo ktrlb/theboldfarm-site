@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from 'next/dynamic';
+import { PastureWithDetails, PropertyMap } from '@/lib/pasture-types';
 
 // Dynamically import PastureMap to avoid SSR issues with Leaflet
 const PastureMapComponent = dynamic(() => import('./pasture-map').then(mod => ({ default: mod.PastureMap })), {
@@ -15,5 +16,15 @@ const PastureMapComponent = dynamic(() => import('./pasture-map').then(mod => ({
   )
 });
 
-export const PastureMapWrapper = PastureMapComponent;
+interface PastureMapWrapperProps {
+  pastures: PastureWithDetails[];
+  propertyMap?: PropertyMap | null;
+  onPastureClick?: (pasture: PastureWithDetails) => void;
+  mode?: 'view' | 'edit';
+  onAddPasture?: () => void;
+}
+
+export function PastureMapWrapper(props: PastureMapWrapperProps) {
+  return <PastureMapComponent {...props} />;
+}
 

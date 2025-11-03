@@ -17,11 +17,19 @@ export async function GET() {
       .from(pastureRestPeriods)
       .orderBy(desc(pastureRestPeriods.start_date));
     
-    return NextResponse.json(allRestPeriods);
+    return NextResponse.json(allRestPeriods || []);
   } catch (error) {
     console.error('Error fetching rest periods:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // If table doesn't exist, return empty array
+    if (errorMessage.includes('does not exist') || errorMessage.includes('relation')) {
+      console.warn('Rest periods table does not exist yet, returning empty array');
+      return NextResponse.json([]);
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch rest periods' },
+      { error: 'Failed to fetch rest periods', details: errorMessage },
       { status: 500 }
     );
   }

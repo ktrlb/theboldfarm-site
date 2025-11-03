@@ -17,11 +17,19 @@ export async function GET() {
       .from(pastureObservations)
       .orderBy(desc(pastureObservations.observation_date));
     
-    return NextResponse.json(allObservations);
+    return NextResponse.json(allObservations || []);
   } catch (error) {
     console.error('Error fetching observations:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // If table doesn't exist, return empty array
+    if (errorMessage.includes('does not exist') || errorMessage.includes('relation')) {
+      console.warn('Observations table does not exist yet, returning empty array');
+      return NextResponse.json([]);
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch observations' },
+      { error: 'Failed to fetch observations', details: errorMessage },
       { status: 500 }
     );
   }

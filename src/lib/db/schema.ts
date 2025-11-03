@@ -112,6 +112,8 @@ export const propertyMap = pgTable('property_map', {
   total_area: decimal('total_area', { precision: 10, scale: 2 }),
   area_unit: text('area_unit').notNull().default('acres'),
   boundary_data: json('boundary_data'),
+  map_center: json('map_center'), // [lng, lat] array
+  map_zoom: decimal('map_zoom', { precision: 3, scale: 1 }), // zoom level (0-20)
   map_image_url: text('map_image_url'),
   map_svg: text('map_svg'),
   map_scale: decimal('map_scale', { precision: 10, scale: 2 }),

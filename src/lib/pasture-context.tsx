@@ -36,6 +36,10 @@ interface PastureContextType {
   startRestPeriod: (restPeriod: Omit<PastureRestPeriod, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   endRestPeriod: (id: number, actualEndDate: string) => Promise<void>;
   
+  // Property Map functions
+  savePropertyBoundary: (coordinates: number[][]) => Promise<void>;
+  savePropertyLocation: (center: [number, number], zoom: number) => Promise<void>;
+  
   // Utility functions
   refreshData: () => Promise<void>;
   getPastureById: (id: number) => PastureWithDetails | undefined;
@@ -69,11 +73,12 @@ export function PastureProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       // Fetch all data in parallel
-      const [pasturesRes, rotationsRes, observationsRes, restPeriodsRes] = await Promise.all([
+      const [pasturesRes, rotationsRes, observationsRes, restPeriodsRes, propertyMapRes] = await Promise.all([
         fetch('/api/pastures'),
         fetch('/api/rotations'),
         fetch('/api/observations'),
         fetch('/api/rest-periods'),
+        fetch('/api/property-map'),
       ]);
 
       if (!pasturesRes.ok) throw new Error('Failed to fetch pastures');
@@ -85,6 +90,28 @@ export function PastureProvider({ children }: { children: ReactNode }) {
       const rotationsData: GrazingRotation[] = await rotationsRes.json();
       const observationsData: PastureObservation[] = await observationsRes.json();
       const restPeriodsData: PastureRestPeriod[] = await restPeriodsRes.json();
+      let propertyMapData: PropertyMap | null = await propertyMapRes.json();
+
+      // Auto-initialize farm location if not set
+      if (!propertyMapData?.map_center) {
+        const { FARM_LOCATION } = await import('@/lib/farm-location');
+        try {
+          const initRes = await fetch('/api/property-map', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: FARM_LOCATION.name,
+              map_center: FARM_LOCATION.center,
+              map_zoom: FARM_LOCATION.zoom,
+            }),
+          });
+          if (initRes.ok) {
+            propertyMapData = await initRes.json();
+          }
+        } catch (err) {
+          console.error('Failed to auto-initialize farm location:', err);
+        }
+      }
 
       // Enrich pastures with related data
       const enrichedPastures: PastureWithDetails[] = pasturesData.map(pasture => {
@@ -120,8 +147,7 @@ export function PastureProvider({ children }: { children: ReactNode }) {
       setRotations(rotationsData);
       setObservations(observationsData);
       setRestPeriods(restPeriodsData);
-      // Note: property_map table not implemented yet, leave as null
-      setPropertyMap(null);
+      setPropertyMap(propertyMapData);
     } catch (err) {
       console.error('Error fetching pasture data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch pasture data');
@@ -354,6 +380,56 @@ export function PastureProvider({ children }: { children: ReactNode }) {
     return restPeriods.filter(rp => rp.is_active);
   };
 
+  // Save property boundary
+  const savePropertyBoundary = async (coordinates: number[][]) => {
+    try {
+      const res = await fetch('/api/property-map', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          boundary_data: {
+            type: 'polygon',
+            coordinates: coordinates,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to save property boundary');
+      }
+
+      await fetchData(); // Refresh data
+    } catch (err) {
+      console.error('Error saving property boundary:', err);
+      throw err;
+    }
+  };
+
+  // Save property map center location
+  const savePropertyLocation = async (center: [number, number], zoom: number) => {
+    try {
+      const res = await fetch('/api/property-map', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          map_center: center,
+          map_zoom: zoom,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to save property location');
+      }
+
+      await fetchData(); // Refresh data
+    } catch (err) {
+      console.error('Error saving property location:', err);
+      throw err;
+    }
+  };
+
   // Initial data fetch
   useEffect(() => {
     if (isClient) {
@@ -379,6 +455,8 @@ export function PastureProvider({ children }: { children: ReactNode }) {
       addObservation,
       startRestPeriod,
       endRestPeriod,
+      savePropertyBoundary,
+      savePropertyLocation,
       refreshData: fetchData,
       getPastureById,
       getCurrentRotations,

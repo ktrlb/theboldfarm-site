@@ -37,6 +37,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     if (!db) {
       return NextResponse.json(
@@ -45,7 +46,6 @@ export async function DELETE(
       );
     }
 
-    const { id } = await params;
     await db.delete(imageAlbums).where(eq(imageAlbums.id, parseInt(id)));
     
     return NextResponse.json({ success: true });

@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Polygon, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Plus } from "lucide-react";
-import type { Pasture, PastureWithDetails } from "@/lib/pasture-types";
+import { Plus, Map } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import type { Pasture, PastureWithDetails, PropertyMap } from "@/lib/pasture-types";
+import { MAP_LAYERS, DEFAULT_LAYER_ID } from "@/lib/map-layers";
 
 // Fix for default marker icons in Next.js
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -22,6 +24,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 
 interface PastureMapProps {
   pastures: PastureWithDetails[];
+  propertyMap?: PropertyMap | null;
   onPastureClick?: (pasture: PastureWithDetails) => void;
   mode?: 'view' | 'edit';
   onAddPasture?: () => void;
@@ -32,11 +35,6 @@ function MapCenter({ pastures }: { pastures: Pasture[] }) {
   const map = useMap();
   
   useEffect(() => {
-    if (pastures.length === 0) {
-      map.setView([40.7128, -74.0060], 13); // Default center
-      return;
-    }
-
     // Calculate bounds of all pastures
     const bounds = L.latLngBounds([]);
     let hasCoordinates = false;
@@ -55,7 +53,10 @@ function MapCenter({ pastures }: { pastures: Pasture[] }) {
     if (hasCoordinates) {
       map.fitBounds(bounds, { padding: [50, 50] });
     } else {
-      map.setView([40.7128, -74.0060], 13);
+      // Use farm location as default
+      import('@/lib/farm-location').then(({ FARM_LOCATION }) => {
+        map.setView([FARM_LOCATION.center[1], FARM_LOCATION.center[0]], FARM_LOCATION.zoom);
+      });
     }
   }, [pastures, map]);
 
@@ -80,7 +81,10 @@ function getPastureOpacity(_pasture: PastureWithDetails): number {
   return 0.5;
 }
 
-export function PastureMap({ pastures, onPastureClick, mode = 'view', onAddPasture }: PastureMapProps) {
+export function PastureMap({ pastures, propertyMap, onPastureClick, mode = 'view', onAddPasture }: PastureMapProps) {
+  const [selectedLayerId, setSelectedLayerId] = useState<string>(DEFAULT_LAYER_ID);
+  const selectedLayer = MAP_LAYERS.find(l => l.id === selectedLayerId) || MAP_LAYERS[0];
+
   const handlePolygonClick = (pasture: PastureWithDetails) => {
     if (onPastureClick) {
       onPastureClick(pasture);
@@ -90,14 +94,15 @@ export function PastureMap({ pastures, onPastureClick, mode = 'view', onAddPastu
   return (
     <div className="relative w-full h-full">
       <MapContainer
-        center={[40.7128, -74.0060]}
-        zoom={13}
+        center={propertyMap?.map_center ? [propertyMap.map_center[1], propertyMap.map_center[0]] : [32.42041750212495, -97.89525682461269]}
+        zoom={propertyMap?.map_zoom || 15}
         style={{ height: '100%', width: '100%' }}
         className="rounded-lg"
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          key={selectedLayerId}
+          url={selectedLayer.url}
+          attribution={selectedLayer.attribution}
         />
         
         <MapCenter pastures={pastures} />
@@ -177,15 +182,39 @@ export function PastureMap({ pastures, onPastureClick, mode = 'view', onAddPastu
         })}
       </MapContainer>
 
-      {mode === 'edit' && onAddPasture && (
-        <Button
-          onClick={onAddPasture}
-          className="absolute top-4 right-4 z-[1000] bg-orange-600 hover:bg-orange-700"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add Pasture
-        </Button>
-      )}
+      {/* Controls */}
+      <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-lg p-2 min-w-[200px]">
+        {/* Map Layer Selector */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-gray-700 flex items-center gap-1">
+            <Map className="h-3 w-3" />
+            Map Style
+          </label>
+          <Select value={selectedLayerId} onValueChange={setSelectedLayerId}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MAP_LAYERS.map((layer) => (
+                <SelectItem key={layer.id} value={layer.id}>
+                  {layer.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {mode === 'edit' && onAddPasture && (
+          <Button
+            onClick={onAddPasture}
+            className="mt-2 w-full bg-orange-600 hover:bg-orange-700"
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Pasture
+          </Button>
+        )}
+      </div>
 
       {/* Legend */}
       <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 z-[1000] border border-gray-200">

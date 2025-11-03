@@ -83,6 +83,8 @@ export interface PropertyMap {
     coordinates?: number[][];
     svg_path?: string;
   } | null;
+  map_center?: [number, number] | null; // [lng, lat] for map center
+  map_zoom?: number | null; // Default zoom level
   map_image_url: string | null;
   map_svg: string | null;
   map_scale: number | null;

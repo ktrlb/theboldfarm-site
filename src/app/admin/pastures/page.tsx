@@ -13,23 +13,38 @@ import {
   AlertCircle,
   Leaf,
   RefreshCw,
-  Eye
+  Eye,
+  Edit
 } from "lucide-react";
 import { PastureProvider, usePasture } from "@/lib/pasture-context";
 import { PastureMapWrapper } from "@/components/pasture-map-wrapper";
+import { PastureMapEditorWrapper } from "@/components/pasture-map-editor-wrapper";
+import { PropertyMapSetup } from "@/components/property-map-setup";
 import type { PastureWithDetails } from "@/lib/pasture-types";
 import 'leaflet/dist/leaflet.css';
+import 'leaflet-draw/dist/leaflet.draw.css';
 
 function PastureManagementContent() {
   const { 
     pastures, 
     rotations,
     observations,
+    propertyMap,
     loading, 
     error,
     getCurrentRotations,
-    getActiveRestPeriods
+    getActiveRestPeriods,
+    savePropertyBoundary,
+    savePropertyLocation,
+    addPasture,
+    updatePasture
   } = usePasture();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedPasture, setSelectedPasture] = useState<PastureWithDetails | null>(null);
+  
+  // With hardcoded location, we don't need setup - it auto-initializes
+  // But we can still show setup if location hasn't been saved yet
+  const needsSetup = !propertyMap?.map_center;
 
   if (loading) {
     return (
@@ -269,18 +284,122 @@ function PastureManagementContent() {
         <TabsContent value="map">
           <Card>
             <CardHeader>
-              <CardTitle>Property Map</CardTitle>
-              <CardDescription>
-                Visual representation of your pastures with real-time status
-              </CardDescription>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>Property Map</CardTitle>
+                  <CardDescription>
+                    {needsSetup 
+                      ? "Set your property location first, then draw boundaries and pastures."
+                      : isEditMode 
+                      ? "Draw your property boundary and pasture polygons. Click the polygon tool to start drawing."
+                      : "Visual representation of your pastures with real-time status. Switch map layers using the control in the top-right."
+                    }
+                  </CardDescription>
+                </div>
+                <Button
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  variant={isEditMode ? "outline" : "default"}
+                  className={isEditMode ? "" : "bg-orange-600 hover:bg-orange-700"}
+                >
+                  {isEditMode ? (
+                    <>
+                      <Eye className="h-4 w-4 mr-2" />
+                      View Mode
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Map
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="h-[600px] w-full">
-                <PastureMapWrapper 
-                  pastures={pastures}
-                  mode="view"
-                />
-              </div>
+              {needsSetup ? (
+                <div className="flex flex-col items-center justify-center min-h-[400px] py-8">
+                  <PropertyMapSetup
+                    onLocationSet={async (center, zoom) => {
+                      try {
+                        await savePropertyLocation(center, zoom);
+                        alert('Location set! You can now draw your property boundary.');
+                      } catch (err) {
+                        alert('Failed to save location');
+                      }
+                    }}
+                    onSkip={async () => {
+                      // Use farm location
+                      const { FARM_LOCATION } = await import('@/lib/farm-location');
+                      await savePropertyLocation(FARM_LOCATION.center, FARM_LOCATION.zoom);
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="h-[600px] w-full">
+                  {isEditMode ? (
+                  <PastureMapEditorWrapper
+                    pastures={pastures}
+                    propertyMap={propertyMap}
+                    onPastureClick={(pasture) => setSelectedPasture(pasture)}
+                    onPropertyBoundarySave={async (coordinates) => {
+                      try {
+                        await savePropertyBoundary(coordinates);
+                        alert('Property boundary saved!');
+                      } catch (err) {
+                        alert('Failed to save property boundary');
+                      }
+                    }}
+                    onPastureSave={async (pastureId, coordinates) => {
+                      try {
+                        await updatePasture(pastureId, {
+                          shape_data: {
+                            type: 'polygon',
+                            coordinates: coordinates,
+                          },
+                        });
+                        alert('Pasture updated!');
+                      } catch (err) {
+                        alert('Failed to update pasture');
+                      }
+                    }}
+                    onPastureCreate={async (name, coordinates) => {
+                      try {
+                        await addPasture({
+                          name: name,
+                          description: null,
+                          area_size: null,
+                          area_unit: 'acres',
+                          shape_data: {
+                            type: 'polygon',
+                            coordinates: coordinates,
+                          },
+                          quality_rating: null,
+                          forage_type: null,
+                          water_source: false,
+                          shade_available: false,
+                          fencing_type: null,
+                          fencing_condition: null,
+                          notes: null,
+                          custom_fields: null,
+                          is_active: true,
+                        });
+                        alert('Pasture created!');
+                      } catch (err) {
+                        alert('Failed to create pasture');
+                      }
+                    }}
+                    mode="edit"
+                  />
+                ) : (
+                  <PastureMapWrapper 
+                    pastures={pastures}
+                    propertyMap={propertyMap}
+                    onPastureClick={(pasture) => setSelectedPasture(pasture)}
+                    mode="view"
+                  />
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

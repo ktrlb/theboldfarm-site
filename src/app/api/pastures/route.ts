@@ -14,11 +14,19 @@ export async function GET() {
 
     const allPastures = await db.select().from(pastures).orderBy(asc(pastures.name));
     
-    return NextResponse.json(allPastures);
+    return NextResponse.json(allPastures || []);
   } catch (error) {
     console.error('Error fetching pastures:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // If table doesn't exist, return empty array instead of error
+    if (errorMessage.includes('does not exist') || errorMessage.includes('relation')) {
+      console.warn('Pastures table does not exist yet, returning empty array');
+      return NextResponse.json([]);
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch pastures' },
+      { error: 'Failed to fetch pastures', details: errorMessage },
       { status: 500 }
     );
   }
