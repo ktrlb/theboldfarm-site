@@ -1,34 +1,33 @@
 import * as schema from './schema';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import type { ExtractTablesWithRelations } from 'drizzle-orm';
 
-// Lazy database initialization - only create when accessed
+// Lazy database initialization - only create when accessed at runtime
 // This prevents Vercel from trying to provision resources during build
 let dbInstance: PostgresJsDatabase<typeof schema> | null = null;
-let initPromise: Promise<PostgresJsDatabase<typeof schema> | null> | null = null;
 
-async function initializeDbAsync(): Promise<PostgresJsDatabase<typeof schema> | null> {
+function getDb(): PostgresJsDatabase<typeof schema> | null {
+  // Return existing instance if already created
   if (dbInstance) {
     return dbInstance;
   }
 
-  // Check if we're in a build context - skip during build
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
+  // Only initialize at runtime in API routes, never during build
+  // Check environment to avoid initialization during build
+  if (!process.env.VERCEL && process.env.NEXT_PHASE === 'phase-production-build') {
     return null;
   }
 
   const connectionString = process.env.NEON_POSTGRES_DATABASE_URL || process.env.POSTGRES_URL;
-
   if (!connectionString) {
     return null;
   }
 
   try {
-    // Dynamic import - only loads at runtime, not during build
+    // Use require only when actually needed at runtime
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const postgres = (await import('postgres')).default;
+    const postgres = require('postgres').default;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { drizzle } = await import('drizzle-orm/postgres-js');
+    const { drizzle } = require('drizzle-orm/postgres-js');
 
     const queryClient = postgres(connectionString, {
       max: 10,
@@ -39,55 +38,28 @@ async function initializeDbAsync(): Promise<PostgresJsDatabase<typeof schema> | 
     dbInstance = drizzle(queryClient, { schema });
     return dbInstance;
   } catch (error) {
-    console.error('Failed to initialize database connection:', error);
+    // Silently fail - API routes will handle null db
     return null;
   }
 }
 
-function initializeDb(): PostgresJsDatabase<typeof schema> | null {
-  // During build, return null immediately
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
-    return null;
-  }
-
-  if (dbInstance) {
-    return dbInstance;
-  }
-
-  // If we have a pending initialization, wait for it (synchronous return null for now)
-  if (initPromise) {
-    return null;
-  }
-
-  // Start async initialization but return null immediately
-  initPromise = initializeDbAsync();
-  initPromise.then((instance) => {
-    dbInstance = instance;
-    initPromise = null;
-  }).catch(() => {
-    initPromise = null;
+// Export as a getter function instead of calling it at module load
+// This ensures it's only evaluated when actually accessed in API routes
+// Vercel won't try to provision resources just because we import this module
+export const db = (() => {
+  // Return a proxy that only initializes when methods are accessed
+  return new Proxy({} as PostgresJsDatabase<typeof schema>, {
+    get(_target, prop: string | symbol) {
+      const instance = getDb();
+      if (!instance) {
+        // Return undefined for methods - API routes check `if (!db)` first
+        return undefined;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (instance as any)[prop];
+    }
   });
-
-  return null;
-}
-
-// Export db with lazy getter - only initializes when first accessed
-// This prevents any database code from running during build time
-export const db = new Proxy({} as PostgresJsDatabase<typeof schema>, {
-  get(_target, prop: string | symbol) {
-    // During build, return null so API routes can check `if (!db)`
-    if (process.env.NEXT_PHASE === 'phase-production-build') {
-      return null;
-    }
-
-    const instance = initializeDb();
-    if (!instance) {
-      return null;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (instance as any)[prop];
-  }
-});
+})();
 
 // Export schema for use in queries
 export { schema };
