@@ -1,167 +1,126 @@
-# The Bold Farm Website - Cursor Rules
+The Bold Farm - Cursor Rules
 
-## Project Overview
-This is a Next.js 15 website for The Bold Farm, a Nigerian Dwarf goat farm. The site features goat listings, farm information, and an admin panel for managing content.
+Project Overview
+This is a Next.js 15 (App Router) website for The Bold Farm, a Nigerian Dwarf goat farm. It features goat listings, farm information, a shop page (contact-based ordering), and an Admin Dashboard with tools for goats, products, pastures, chores, and image album management.
 
-## Tech Stack
-- **Framework**: Next.js 15.4.6 (App Router) with TypeScript
-- **Styling**: Tailwind CSS with Shadcn UI components
-- **Database**: Supabase (PostgreSQL)
-- **Deployment**: Vercel (auto-deploy from GitHub)
-- **Package Manager**: npm (Note: yarn.lock exists but using npm)
+Tech Stack
+- Framework: Next.js 15.4.6 (App Router) with TypeScript
+- Styling: Tailwind CSS + Shadcn UI
+- Database: Neon (PostgreSQL) via Drizzle ORM (postgres-js driver)
+- Storage: Vercel Blob (images)
+- Deployment: Vercel (auto-deploy from GitHub `main`)
+- Package Manager: npm (even if yarn.lock exists)
 
-## Development Workflow Rules
+Development Workflow
+- Always kill running dev servers before starting a new one
+  - Check: ps aux | grep "next dev"
+  - Kill if needed, then run: npm run dev
+  - Dev server prefers port 3000; uses 3001 if occupied
+- Build and Deploy
+  - Always test build before deploy: npm run build
+  - Deploy only via git: git add . && git commit -m "msg" && git push origin main
+  - Vercel auto-deploys from GitHub main
+  - Never deploy directly from local tools
 
-### Starting Development
-- **Always kill any running dev servers before starting a new one**
-- Check for running processes: `ps aux | grep "next dev"`
-- Kill if needed before running `npm run dev`
-- Dev server runs on port 3001 if 3000 is occupied
+Rendering & Code Standards
+- Use TypeScript everywhere; prefer interfaces over types
+- Prefer Server Components; use "use client" only for interactive UI/forms/browser APIs
+- Follow App Router conventions (server-first data fetching)
+- Functional, declarative React components; avoid classes
+- Descriptive variable names (e.g., isLoading, hasError)
+- Keep code readable; avoid deep nesting; early returns where possible
+- Avoid unnecessary try/catch; only handle errors meaningfully
 
-### Deployment Rules
-- **Always deploy through git - NEVER deploy directly**
-- **Always wait for explicit user approval before building and deploying**
-- Build process: `npm run build` (test build first)
-- Deployment: `git add . && git commit -m "message" && git push origin main`
-- Vercel auto-deploys from GitHub main branch
+Data & API
+- Data source of truth: Neon (Postgres) via Drizzle ORM
+- Never use mock/local JSON data
+- All read/write operations go through Next.js API routes
+  - Goats: /api/goats, /api/goats/[id]
+  - Products: /api/products, /api/products/[id]
+  - Pastures: /api/pastures, /api/pastures/[id]
+  - Rotations: /api/rotations, /api/rotations/[id]
+  - Observations: /api/observations
+  - Rest Periods: /api/rest-periods, /api/rest-periods/[id]
+  - Albums: /api/albums, /api/albums/[id]
+  - Property Map: /api/property-map
+- Images are stored in Vercel Blob; no direct DB blobs
+- Database client initialization must be lazy (runtime-only) to avoid Vercel resource provisioning during build
+  - See: src/lib/db/client.ts (Proxy-based, on-demand init)
 
-### Code Standards
-- Use TypeScript for all code
-- Use functional components with React hooks
-- Prefer Server Components over Client Components
-- Use "use client" only when necessary (forms, state, browser APIs)
-- Follow Next.js App Router conventions
+Environment Variables
+- Database: POSTGRES_URL (or NEON_POSTGRES_DATABASE_URL)
+- Vercel Blob: Managed by @vercel/blob; ensure required tokens/vars configured in Vercel Dashboard
+- Never hardcode secrets; always use process.env in server-only code
 
-## Database Structure
+Admin Dashboard Sections
+- Goat Management: CRUD for goats, including type filtering
+- Product Management: CRUD for products
+- Pasture Management:
+  - Map view with base layers (OSM, Satellite, Topographic, etc.)
+  - Property boundary polygon (single)
+  - Pasture polygons (multiple) with custom fields (JSON)
+  - Geocoding via OpenStreetMap Nominatim
+  - View and Edit modes; Leaflet + leaflet-draw integration
+  - Farm location can be hardcoded default; persisted map center/zoom
+- Chore Management: CRUD for chores (planned)
+- Image Management: Albums + uploads to Vercel Blob; auto-compression on upload
 
-### Goats Table (Supabase)
-```typescript
-interface Goat {
-  id: number;
-  name: string;
-  type: 'Dairy Doe' | 'Breeding Buck' | 'Doeling Kid' | 'Buckling Kid' | 'Wether' | 'Pet Only Doe';
-  birth_date: string;
-  birth_type: 'exact' | 'year';
-  price: number;
-  is_for_sale: boolean;
-  registered: boolean;
-  horn_status: 'Horned' | 'Dehorned' | 'Polled';
-  dam: string | null;
-  sire: string | null;
-  bio: string;
-  status: 'Available' | 'Reserved' | 'Sold';
-  photos: string[];
-  created_at: string;
-  updated_at: string;
-}
-```
+Goat Type System
+Use these exact strings everywhere:
+- Dairy Doe
+- Breeding Buck
+- Doeling Kid
+- Buckling Kid
+- Wether
+- Pet Only Doe
 
-### Products Table (Supabase)
-```typescript
-interface Product {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  description: string;
-  in_stock: boolean;
-  featured: boolean;
-  photos: string[];
-  created_at: string;
-}
-```
+Filtering System
+- Goats for Sale page: filter by type, only is_for_sale: true
+- Animals page: filter by type for all goats
+- Keep filter logic consistent; update FILTER_OPTIONS and filtering helpers when types change
 
-## Goat Type System
-**Important**: The site uses specific goat type values. Always use these exact strings:
-- **Dairy Doe** - Adult female goats for milk production
-- **Breeding Buck** - Adult male goats for breeding
-- **Doeling Kid** - Female kids (young goats)
-- **Buckling Kid** - Male kids (young goats)
-- **Wether** - Neutered males (great for pet homes)
-- **Pet Only Doe** - Adult females specifically for pet homes (not for dairy)
+Images & Uploads
+- Auto-resize/compress to <= 2MB, JPEG output; iterative compression using sharp
+- Process uploads sequentially; show progress states (Compressing, Uploading, Complete)
+- Use Next Image component for rendering when possible; prefer WebP for static assets
 
-## Key Features
-
-### Filtering System
-- Goats for Sale page: Filters by goat type, shows only goats with `is_for_sale: true`
-- Animals page: Filters all goats regardless of sale status
-- Both pages use the same filter logic and goat type categories
-
-### Admin Panel
-- Protected route at `/admin`
-- Allows CRUD operations on goats and products
-- Add/Edit forms include all goat type options
-- Forms do NOT require name or bio fields (optional)
-
-### Shop Page
-- Contact-based ordering (not e-commerce)
-- Directs users to Facebook, email, or farmstand events
-- NO Shopify integration
-- NO cart functionality
-
-## Important Notes
-
-### Data Source
-- **ALL data comes from Supabase** - no local fallback data
-- Never use mock data or local JSON files
-- If Supabase fails, show error state, don't fall back to local data
-
-### Removed Integrations
-- ❌ Shopify (completely removed)
-- ❌ Shopping cart functionality
-- ❌ Direct e-commerce checkout
-
-### Key Files
-- `/src/lib/supabase-context.tsx` - Database context provider
-- `/src/lib/data.ts` - Type definitions and helper functions
-- `/src/components/admin-panel.tsx` - Admin CRUD interface
-- `/src/app/goats/page.tsx` - Goats for sale with filtering
-- `/src/app/animals/page.tsx` - All farm animals with filtering
-
-## Environment Variables Required
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-```
-
-## Common Tasks
-
-### Adding a New Goat Type
-1. Update type definition in `/src/lib/data.ts`
-2. Add to filter options in goats and animals pages
-3. Add to select options in admin panel (AddGoatForm and EditGoatForm)
-4. Update Supabase table constraint if needed
-
-### Updating Filter Logic
-- Update `FILTER_OPTIONS` array
-- Update switch statement in `filteredGoats` useMemo
-- Ensure consistent filtering across goats and animals pages
-
-### Testing Before Deploy
-```bash
-npm run build  # Always test build first
-# Fix any errors or warnings
-git add .
-git commit -m "descriptive message"
-git push origin main
-```
-
-## UI/UX Preferences
-- Orange is the primary brand color (#orange-600)
+Performance & UX
 - Mobile-first responsive design
-- Empty states should be helpful and encouraging
-- Filter tags use rounded-full pill style
-- Card components for goat/product displays
+- Orange (#orange-600) as primary brand color
+- Use Suspense for client components; lazy load non-critical features
+- Optimize Web Vitals (LCP, CLS, FID)
+- Keep bundle sizes lean
 
-## Performance Notes
-- Images should use Next.js Image component when possible
-- Lazy load non-critical content
-- Use proper TypeScript types throughout
-- Keep bundle sizes optimized
+Mapping
+- Map layers defined in src/lib/map-layers.ts
+- Hardcoded farm location in src/lib/farm-location.ts (used for defaults)
+- Property map stored via /api/property-map with map_center (JSON) and map_zoom
 
----
+Drizzle ORM & Schema
+- Schema in src/lib/db/schema.ts
+- Use JSON columns for custom fields where appropriate
+- All migrations handled with drizzle-kit; ensure schema pushed to Neon before relying on tables
+- API routes should tolerate missing tables by returning empty arrays where appropriate
 
-**Remember**: Always ask before deploying to production. The user wants explicit control over when builds and deployments happen.
+Security & Build
+- Do not connect to DB during Next build; db client must be lazy
+- Keep server-only code out of client bundles
+- Validate all API inputs (Zod preferred)
+
+Removed/Not Used
+- Supabase: fully removed (no client, no types, no setup)
+- Shopify & shopping cart: not used
+- Direct e-commerce checkout: not used
+
+Testing Before Deploy
+- npm run build
+- Fix errors/warnings
+- git add . && git commit -m "message" && git push origin main
+
+Notes
+- Use nuqs for URL search param state where appropriate
+- Follow Next.js docs for Data Fetching, Rendering, and Routing
+- Prefer small client components wrapped in Suspense
 
 
 

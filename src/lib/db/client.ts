@@ -64,3 +64,8 @@ export const db = (() => {
 // Export schema for use in queries
 export { schema };
 
+// Explicit getter so API routes can safely detect missing DB configuration
+export function getDbInstance(): PostgresJsDatabase<typeof schema> | null {
+  return getDb();
+}
+
