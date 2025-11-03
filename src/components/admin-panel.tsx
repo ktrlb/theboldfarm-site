@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { getGoatAge, getGoatPlaceholder, GoatRow, ProductRow } from "@/lib/data";
 import { useSupabase } from "@/lib/database-context";
-import { Database } from "@/lib/supabase";
+import { Database } from "@/lib/database-types";
 import { PhotoUpload } from "@/components/photo-upload";
 
 interface AdminPanelProps {

@@ -1,5 +1,5 @@
 // Shared data for the farm website
-import { Database } from './supabase';
+import { Database } from './database-types';
 
 type GoatRow = Database['public']['Tables']['goats']['Row'];
 type ProductRow = Database['public']['Tables']['products']['Row'];

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2 } from "lucide-react";
 import { useSupabase } from "@/lib/database-context";
 import { getGoatAge, getGoatPlaceholder, GoatRow, ProductRow } from "@/lib/data";
-import { Database } from "@/lib/supabase";
+import { Database } from "@/lib/database-types";
 import { PhotoUpload } from "@/components/photo-upload";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AddGoatForm, EditGoatForm, AddProductForm, EditProductForm } from "@/components/admin-panel";

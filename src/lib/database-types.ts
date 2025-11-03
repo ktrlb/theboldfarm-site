@@ -1,14 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-// Create a mock client if Supabase credentials aren't available
-export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null
-
 // Database types for TypeScript
+// These match the schema in src/lib/db/schema.ts
 export interface Database {
   public: {
     Tables: {
@@ -200,3 +191,4 @@ export interface Database {
     }
   }
 }
+

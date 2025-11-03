@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Database } from "./supabase";
+import { Database } from "./database-types";
 import { GoatRow, ProductRow } from "./data";
 
 type GoatUpdate = Database['public']['Tables']['goats']['Update'];
