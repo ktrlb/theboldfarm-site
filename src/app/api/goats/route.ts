@@ -16,11 +16,9 @@ export async function GET() {
     
     return NextResponse.json(allGoats);
   } catch (error) {
-    console.error('Error fetching goats:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch goats' },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error fetching goats:', message);
+    return NextResponse.json({ error: 'Failed to fetch goats', details: message }, { status: 500 });
   }
 }
 

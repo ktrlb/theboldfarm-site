@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
+import { getDbInstance } from '@/lib/db/client';
 import { imageAlbums } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -8,9 +8,10 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const db = getDbInstance();
     if (!db) {
       return NextResponse.json(
-        { error: 'Database not configured' },
+        { error: 'Database not configured. Missing NEON_POSTGRES_DATABASE_URL or POSTGRES_URL' },
         { status: 500 }
       );
     }
@@ -39,9 +40,10 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
+    const db = getDbInstance();
     if (!db) {
       return NextResponse.json(
-        { error: 'Database not configured' },
+        { error: 'Database not configured. Missing NEON_POSTGRES_DATABASE_URL or POSTGRES_URL' },
         { status: 500 }
       );
     }

@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
+import { getDbInstance } from '@/lib/db/client';
 import { pastures } from '@/lib/db/schema';
 import { asc } from 'drizzle-orm';
 
 export async function GET() {
   try {
+    const db = getDbInstance();
     if (!db) {
       return NextResponse.json(
-        { error: 'Database not configured' },
+        { error: 'Database not configured. Missing NEON_POSTGRES_DATABASE_URL or POSTGRES_URL' },
         { status: 500 }
       );
     }
@@ -34,9 +35,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const db = getDbInstance();
     if (!db) {
       return NextResponse.json(
-        { error: 'Database not configured' },
+        { error: 'Database not configured. Missing NEON_POSTGRES_DATABASE_URL or POSTGRES_URL' },
         { status: 500 }
       );
     }

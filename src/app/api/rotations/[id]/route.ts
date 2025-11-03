@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
+import { getDbInstance } from '@/lib/db/client';
 import { grazingRotations } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -9,9 +9,10 @@ export async function PUT(
 ) {
   const { id } = await params;
   try {
+    const db = getDbInstance();
     if (!db) {
       return NextResponse.json(
-        { error: 'Database not configured' },
+        { error: 'Database not configured. Missing NEON_POSTGRES_DATABASE_URL or POSTGRES_URL' },
         { status: 500 }
       );
     }

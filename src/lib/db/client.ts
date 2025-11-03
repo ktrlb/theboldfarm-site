@@ -17,15 +17,19 @@ function getDb(): PostgresJsDatabase<typeof schema> | null {
     return null;
   }
 
-  const connectionString = process.env.NEON_POSTGRES_DATABASE_URL || process.env.POSTGRES_URL;
+  const connectionString =
+    process.env.NEON_POSTGRES_DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.DATABASE_URL;
   if (!connectionString) {
+    console.error('[db] No Postgres connection string found. Expected one of NEON_POSTGRES_DATABASE_URL, POSTGRES_URL, DATABASE_URL');
     return null;
   }
 
   try {
     // Use require only when actually needed at runtime
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const postgres = require('postgres').default;
+    const postgres = require('postgres');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { drizzle } = require('drizzle-orm/postgres-js');
 
@@ -33,12 +37,13 @@ function getDb(): PostgresJsDatabase<typeof schema> | null {
       max: 10,
       idle_timeout: 20,
       connect_timeout: 10,
+      ssl: 'require',
     });
     
     dbInstance = drizzle(queryClient, { schema });
     return dbInstance;
   } catch (error) {
-    // Silently fail - API routes will handle null db
+    console.error('[db] Error initializing database client:', error instanceof Error ? error.message : error);
     return null;
   }
 }

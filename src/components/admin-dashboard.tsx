@@ -159,7 +159,9 @@ function GoatManagementSection() {
                 {goat.photos && goat.photos.length > 0 ? (
                   <img src={goat.photos[0]} alt={goat.name || 'Goat'} className="w-full h-48 object-cover rounded-lg mb-4" />
                 ) : (
-                  <img src={getGoatPlaceholder(goat)} alt={goat.name || 'Goat'} className="w-full h-48 object-cover rounded-lg mb-4" />
+                  <div className="w-full h-48 rounded-lg mb-4 bg-orange-50 border border-gray-200 flex items-center justify-center text-6xl">
+                    {getGoatPlaceholder(goat)}
+                  </div>
                 )}
                 <div className="space-y-2 text-sm">
                   <p className="font-medium">{getGoatAge(goat)}</p>
