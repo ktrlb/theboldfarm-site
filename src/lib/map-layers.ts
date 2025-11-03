@@ -54,7 +54,7 @@ export const MAP_LAYERS: MapLayer[] = [
   },
 ];
 
-export const DEFAULT_LAYER_ID = 'osm';
+export const DEFAULT_LAYER_ID = 'esri-imagery';
 
 export function getLayerById(id: string): MapLayer | undefined {
   return MAP_LAYERS.find(layer => layer.id === id);

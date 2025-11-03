@@ -23,6 +23,10 @@ import { PropertyMapSetup } from "@/components/property-map-setup";
 import type { PastureWithDetails } from "@/lib/pasture-types";
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge as UiBadge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 function PastureManagementContent() {
   const { 
@@ -37,11 +41,52 @@ function PastureManagementContent() {
     savePropertyBoundary,
     savePropertyLocation,
     addPasture,
-    updatePasture
+    updatePasture,
+    deletePasture
   } = usePasture();
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPasture, setSelectedPasture] = useState<PastureWithDetails | null>(null);
+  const [redrawPastureId, setRedrawPastureId] = useState<number | null>(null);
+  // Status and grazing controls (stored in custom_fields)
+  const DEFAULT_STATUS_OPTIONS = ["Available", "Resting", "Grazing", "Needs Maintenance", "Fallow Season", "Off Limits"] as const;
+  const [statusOptions, setStatusOptions] = useState<string[]>([...DEFAULT_STATUS_OPTIONS]);
+  const [newStatus, setNewStatus] = useState("");
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedGrazers, setSelectedGrazers] = useState<string[]>([]);
+  const [fencingType, setFencingType] = useState<string>("");
+  const [fencingCondition, setFencingCondition] = useState<string>("");
+  const ALLOWED_FENCING_CONDITIONS = ["Excellent","Good","Fair","Poor","Needs Repair"] as const;
+  function toFencingCondition(value: string): typeof ALLOWED_FENCING_CONDITIONS[number] | null {
+    return (ALLOWED_FENCING_CONDITIONS as readonly string[]).includes(value) ? (value as typeof ALLOWED_FENCING_CONDITIONS[number]) : null;
+  }
+
+  function readStringArray(obj: unknown, key: string): string[] {
+    if (!obj || typeof obj !== 'object') return [];
+    const val = (obj as Record<string, unknown>)[key];
+    return Array.isArray(val) && val.every(v => typeof v === 'string') ? (val as string[]) : [];
+  }
   
+  function projectToMeters([lng, lat]: [number, number]): [number, number] {
+    const R = 6378137;
+    const x = (lng * Math.PI) / 180 * R;
+    const y = Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) * R;
+    return [x, y];
+  }
+
+  function computePolygonAreaAcres(coords: number[][] | undefined): number | null {
+    if (!coords || coords.length < 3) return null;
+    const pts = coords.map(c => projectToMeters([c[0], c[1]] as [number, number]));
+    let sum = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const [x1, y1] = pts[i];
+      const [x2, y2] = pts[(i + 1) % pts.length];
+      sum += x1 * y2 - x2 * y1;
+    }
+    const areaM2 = Math.abs(sum) / 2;
+    const acres = areaM2 / 4046.8564224;
+    return Math.round(acres * 100) / 100;
+  }
+
   // With hardcoded location, we don't need setup - it auto-initializes
   // But we can still show setup if location hasn't been saved yet
   const needsSetup = !propertyMap?.map_center;
@@ -73,6 +118,11 @@ function PastureManagementContent() {
   const pasturesNeedingAttention = pastures.filter(p => 
     p.quality_rating && p.quality_rating < 3
   );
+
+  function toggleInList(value: string, list: string[], setter: (v: string[]) => void) {
+    if (list.includes(value)) setter(list.filter(v => v !== value));
+    else setter([...list, value]);
+  }
 
   return (
     <div className="space-y-6">
@@ -182,7 +232,11 @@ function PastureManagementContent() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {/* Status */}
-                  {pasture.current_rotation && (
+                  {readStringArray(pasture.custom_fields, 'statuses').includes('Off Limits') ? (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Badge className="bg-red-100 text-red-800">Off Limits</Badge>
+                    </div>
+                  ) : pasture.current_rotation ? (
                     <div className="flex items-center gap-2 text-sm">
                       <Badge className="bg-green-100 text-green-800">
                         Currently Grazing
@@ -191,9 +245,7 @@ function PastureManagementContent() {
                         {pasture.current_rotation.animal_type}
                       </span>
                     </div>
-                  )}
-
-                  {pasture.rest_period && (
+                  ) : pasture.rest_period ? (
                     <div className="flex items-center gap-2 text-sm">
                       <Badge className="bg-blue-100 text-blue-800">
                         Resting
@@ -202,10 +254,15 @@ function PastureManagementContent() {
                         {pasture.days_resting} days
                       </span>
                     </div>
+                  ) : (
+                    <Badge variant="outline">Available</Badge>
                   )}
 
-                  {!pasture.current_rotation && !pasture.rest_period && (
-                    <Badge variant="outline">Available</Badge>
+                  {/* Area */}
+                  {pasture.shape_data?.coordinates && pasture.shape_data.coordinates.length >= 3 && (
+                    <div className="text-sm text-gray-600">
+                      Area: {computePolygonAreaAcres(pasture.shape_data.coordinates)} acres
+                    </div>
                   )}
 
                   {/* Details */}
@@ -241,9 +298,25 @@ function PastureManagementContent() {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">
-                    <Button size="sm" variant="outline" className="flex-1">
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => setSelectedPasture(pasture)}>
                       <Eye className="h-3 w-3 mr-1" />
                       Details
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-red-600 hover:text-red-700"
+                      onClick={async () => {
+                        if (confirm(`Delete pasture "${pasture.name}"? This cannot be undone.`)) {
+                          try {
+                            await deletePasture(pasture.id);
+                          } catch (err) {
+                            alert('Failed to delete pasture');
+                          }
+                        }
+                      }}
+                    >
+                      Delete
                     </Button>
                     {!pasture.current_rotation && (
                       <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700">
@@ -320,12 +393,7 @@ function PastureManagementContent() {
                 <div className="flex flex-col items-center justify-center min-h-[400px] py-8">
                   <PropertyMapSetup
                     onLocationSet={async (center, zoom) => {
-                      try {
-                        await savePropertyLocation(center, zoom);
-                        alert('Location set! You can now draw your property boundary.');
-                      } catch (err) {
-                        alert('Failed to save location');
-                      }
+                      try { await savePropertyLocation(center, zoom); } catch {}
                     }}
                     onSkip={async () => {
                       // Use farm location
@@ -341,54 +409,11 @@ function PastureManagementContent() {
                     pastures={pastures}
                     propertyMap={propertyMap}
                     onPastureClick={(pasture) => setSelectedPasture(pasture)}
-                    onPropertyBoundarySave={async (coordinates) => {
-                      try {
-                        await savePropertyBoundary(coordinates);
-                        alert('Property boundary saved!');
-                      } catch (err) {
-                        alert('Failed to save property boundary');
-                      }
-                    }}
-                    onPastureSave={async (pastureId, coordinates) => {
-                      try {
-                        await updatePasture(pastureId, {
-                          shape_data: {
-                            type: 'polygon',
-                            coordinates: coordinates,
-                          },
-                        });
-                        alert('Pasture updated!');
-                      } catch (err) {
-                        alert('Failed to update pasture');
-                      }
-                    }}
-                    onPastureCreate={async (name, coordinates) => {
-                      try {
-                        await addPasture({
-                          name: name,
-                          description: null,
-                          area_size: null,
-                          area_unit: 'acres',
-                          shape_data: {
-                            type: 'polygon',
-                            coordinates: coordinates,
-                          },
-                          quality_rating: null,
-                          forage_type: null,
-                          water_source: false,
-                          shade_available: false,
-                          fencing_type: null,
-                          fencing_condition: null,
-                          notes: null,
-                          custom_fields: null,
-                          is_active: true,
-                        });
-                        alert('Pasture created!');
-                      } catch (err) {
-                        alert('Failed to create pasture');
-                      }
-                    }}
+                    onPropertyBoundarySave={async (coordinates) => { try { await savePropertyBoundary(coordinates); } catch {} }}
+                    onPastureSave={async (pastureId, coordinates) => { try { await updatePasture(pastureId, { shape_data: { type: 'polygon', coordinates } }); } catch {} }}
+                    onPastureCreate={async (name, coordinates) => { try { await addPasture({ name, description: null, area_size: null, area_unit: 'acres', shape_data: { type: 'polygon', coordinates }, quality_rating: null, forage_type: null, water_source: false, shade_available: false, fencing_type: null, fencing_condition: null, notes: null, custom_fields: null, is_active: true }); } catch {} }}
                     mode="edit"
+                    redrawPastureId={redrawPastureId}
                   />
                 ) : (
                   <PastureMapWrapper 
@@ -590,6 +615,160 @@ function PastureManagementContent() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Pasture Modal */}
+      {selectedPasture && (
+        <Dialog open={!!selectedPasture} onOpenChange={(open) => !open && setSelectedPasture(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{selectedPasture.name}</DialogTitle>
+              <DialogDescription>
+                {readStringArray(selectedPasture.custom_fields, 'statuses').includes('Off Limits') ? (
+                  <UiBadge className="bg-red-100 text-red-800">Off Limits</UiBadge>
+                ) : (!selectedPasture.current_rotation && !selectedPasture.rest_period) ? (
+                  <UiBadge variant="outline" className="bg-green-50 text-green-700 border-green-200">Available</UiBadge>
+                ) : selectedPasture.current_rotation ? (
+                  <UiBadge className="bg-green-100 text-green-800">Currently Grazing</UiBadge>
+                ) : (
+                  <UiBadge className="bg-blue-100 text-blue-800">Resting</UiBadge>
+                )}
+                {selectedPasture.shape_data?.coordinates && selectedPasture.shape_data.coordinates.length >= 3 && (
+                  <span className="block mt-2 text-sm text-gray-600">
+                    Area: {computePolygonAreaAcres(selectedPasture.shape_data.coordinates)} acres
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            {/* Status and Grazing Controls */}
+            <div className="space-y-4 py-2">
+              <div>
+                <Label className="text-sm">Statuses</Label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {statusOptions.map(opt => (
+                    <label key={opt} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedStatuses.includes(opt)}
+                        onChange={() => toggleInList(opt, selectedStatuses, setSelectedStatuses)}
+                      />
+                      <span>{opt}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  <Input
+                    value={newStatus}
+                    onChange={(e) => setNewStatus(e.target.value)}
+                    placeholder="Add custom status"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      const trimmed = newStatus.trim();
+                      if (!trimmed) return;
+                      if (!statusOptions.includes(trimmed)) setStatusOptions([...statusOptions, trimmed]);
+                      if (!selectedStatuses.includes(trimmed)) setSelectedStatuses([...selectedStatuses, trimmed]);
+                      setNewStatus("");
+                    }}
+                  >
+                    Add
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm">Active Grazing</Label>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {(["Horses","Cows","Boy Goats","Girl Goats","Chickens"] as string[]).map(opt => (
+                    <label key={opt} className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedGrazers.includes(opt)}
+                        onChange={() => toggleInList(opt, selectedGrazers, setSelectedGrazers)}
+                      />
+                      <span>{opt}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {/* Fencing inputs */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="text-sm">Fencing Type</Label>
+                  <Input
+                    value={fencingType}
+                    onChange={(e) => setFencingType(e.target.value)}
+                    placeholder="e.g., Woven wire, Electric, Barbed"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm">Fencing Condition</Label>
+                  <Input
+                    value={fencingCondition}
+                    onChange={(e) => setFencingCondition(e.target.value)}
+                    placeholder="e.g., Good, Fair, Needs repair"
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                className="bg-orange-600 hover:bg-orange-700"
+                onClick={() => {
+                  if (!isEditMode) {
+                    setIsEditMode(true);
+                  }
+                  setRedrawPastureId(selectedPasture.id);
+                  setSelectedPasture(null);
+                }}
+              >
+                Redraw Boundary
+              </Button>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  try {
+                    const nextCustom = {
+                      ...(selectedPasture!.custom_fields || {}),
+                      statuses: selectedStatuses,
+                      grazingAnimals: selectedGrazers,
+                    } as Record<string, unknown>;
+                    await updatePasture(selectedPasture!.id, {
+                      custom_fields: nextCustom as unknown as Record<string, string | number | boolean | null>,
+                      fencing_type: fencingType || null,
+                      fencing_condition: toFencingCondition(fencingCondition),
+                    });
+                  } catch {
+                    // ignore
+                  }
+                }}
+              >
+                Save Details
+              </Button>
+              <Button
+                variant="outline"
+                className="text-red-600 hover:text-red-700"
+                onClick={async () => {
+                  if (confirm(`Delete pasture "${selectedPasture.name}"? This cannot be undone.`)) {
+                    try {
+                      await deletePasture(selectedPasture.id);
+                      setSelectedPasture(null);
+                    } catch (err) {
+                      alert('Failed to delete pasture');
+                    }
+                  }
+                }}
+              >
+                Delete
+              </Button>
+              <Button variant="outline" onClick={() => setSelectedPasture(null)}>Close</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db/client';
+import { getDbInstance } from '@/lib/db/client';
 import { pastures } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -9,9 +9,10 @@ export async function PUT(
 ) {
   const { id } = await params;
   try {
+    const db = getDbInstance();
     if (!db) {
       return NextResponse.json(
-        { error: 'Database not configured' },
+        { error: 'Database not configured. Missing NEON_POSTGRES_DATABASE_URL or POSTGRES_URL' },
         { status: 500 }
       );
     }
@@ -25,7 +26,7 @@ export async function PUT(
     
     return NextResponse.json(updatedPasture);
   } catch (error) {
-    console.error('Error updating pasture:', error);
+    console.error('Error updating pasture:', error instanceof Error ? error.message : error);
     return NextResponse.json(
       { error: 'Failed to update pasture' },
       { status: 500 }
@@ -39,9 +40,10 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
+    const db = getDbInstance();
     if (!db) {
       return NextResponse.json(
-        { error: 'Database not configured' },
+        { error: 'Database not configured. Missing NEON_POSTGRES_DATABASE_URL or POSTGRES_URL' },
         { status: 500 }
       );
     }
@@ -50,7 +52,7 @@ export async function DELETE(
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting pasture:', error);
+    console.error('Error deleting pasture:', error instanceof Error ? error.message : error);
     return NextResponse.json(
       { error: 'Failed to delete pasture' },
       { status: 500 }

@@ -32,6 +32,7 @@ interface PastureMapEditorProps {
   onPastureSave?: (pastureId: number, coordinates: number[][]) => void;
   onPastureCreate?: (name: string, coordinates: number[][]) => void;
   mode?: 'view' | 'edit';
+  redrawPastureId?: number | null;
 }
 
 // Component to center map and set up drawing
@@ -41,7 +42,11 @@ function MapEditorSetup({
   onPropertyBoundarySave,
   onPastureSave,
   onPastureCreate,
-  mode = 'view'
+  mode = 'view',
+  requestedDrawMode,
+  onDrawStarted,
+  canEditBoundary,
+  redrawPastureId
 }: {
   pastures: PastureWithDetails[];
   propertyMap: PropertyMap | null;
@@ -49,10 +54,16 @@ function MapEditorSetup({
   onPastureSave?: (pastureId: number, coordinates: number[][]) => void;
   onPastureCreate?: (name: string, coordinates: number[][]) => void;
   mode?: 'view' | 'edit';
+  requestedDrawMode?: 'property' | 'pasture' | null;
+  onDrawStarted?: () => void;
+  canEditBoundary?: boolean;
+  redrawPastureId?: number | null;
 }) {
   const map = useMap();
   const drawControlRef = useRef<L.Control.Draw | null>(null);
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
+  const currentDrawModeRef = useRef<'property' | 'pasture' | 'pasture-redraw' | null>(null);
+  const drawToolRef = useRef<L.Draw.Polygon | null>(null);
 
   useEffect(() => {
     if (mode === 'edit' && !drawControlRef.current) {
@@ -99,20 +110,32 @@ function MapEditorSetup({
           // Convert to [lng, lat] format for database
           const coordinates = latlngs.map(latlng => [latlng.lng, latlng.lat]);
 
-          // Prompt for pasture name or property boundary
-          const isPropertyBoundary = window.confirm(
-            'Is this the property boundary? Click OK for property boundary, Cancel for a new pasture.'
-          );
+          // If a draw mode was requested, use it to route the save
+          if (currentDrawModeRef.current === 'property') {
+            if (canEditBoundary && onPropertyBoundarySave) onPropertyBoundarySave(coordinates);
+            currentDrawModeRef.current = null;
+            return;
+          }
+          if (currentDrawModeRef.current === 'pasture') {
+            const pastureName = window.prompt('Enter pasture name:');
+            if (pastureName && onPastureCreate) onPastureCreate(pastureName, coordinates);
+            currentDrawModeRef.current = null;
+            return;
+          }
 
+          if (currentDrawModeRef.current === 'pasture-redraw' && redrawPastureId && onPastureSave) {
+            onPastureSave(redrawPastureId, coordinates);
+            currentDrawModeRef.current = null;
+            return;
+          }
+
+          // Fallback legacy flow
+          const isPropertyBoundary = window.confirm('Is this the property boundary? Click OK for property boundary, Cancel for a new pasture.');
           if (isPropertyBoundary) {
-            if (onPropertyBoundarySave) {
-              onPropertyBoundarySave(coordinates);
-            }
+            if (onPropertyBoundarySave) onPropertyBoundarySave(coordinates);
           } else {
             const pastureName = window.prompt('Enter pasture name:');
-            if (pastureName && onPastureCreate) {
-              onPastureCreate(pastureName, coordinates);
-            }
+            if (pastureName && onPastureCreate) onPastureCreate(pastureName, coordinates);
           }
         }
       });
@@ -162,6 +185,47 @@ function MapEditorSetup({
       }
     }
   }, [map, mode, pastures, onPropertyBoundarySave, onPastureSave, onPastureCreate]);
+
+  // Programmatically start polygon drawing when requested
+  useEffect(() => {
+    if (!requestedDrawMode || mode !== 'edit') return;
+    // Initialize a polygon draw tool and enable it
+    if (drawToolRef.current) {
+      // ensure previous tool disabled
+      try { (drawToolRef.current as unknown as { disable: () => void }).disable(); } catch {}
+      drawToolRef.current = null;
+    }
+    // Type-safe constructor for Draw.Polygon without using 'any'
+    type PolygonCtor = new (map: unknown, opts: unknown) => L.Draw.Polygon;
+    const DrawPolygon = (L as unknown as { Draw: { Polygon: PolygonCtor } }).Draw.Polygon;
+    const tool = new DrawPolygon(map as unknown, {
+      showArea: true,
+      allowIntersection: false,
+    } as unknown);
+    currentDrawModeRef.current = requestedDrawMode;
+    tool.enable();
+    drawToolRef.current = tool;
+    if (onDrawStarted) onDrawStarted();
+  }, [requestedDrawMode, mode, map, onDrawStarted]);
+
+  // Start redraw flow when a pasture id is provided
+  useEffect(() => {
+    if (!redrawPastureId || mode !== 'edit') return;
+    if (drawToolRef.current) {
+      try { (drawToolRef.current as unknown as { disable: () => void }).disable(); } catch {}
+      drawToolRef.current = null;
+    }
+    type PolygonCtor2 = new (map: unknown, opts: unknown) => L.Draw.Polygon;
+    const DrawPolygon2 = (L as unknown as { Draw: { Polygon: PolygonCtor2 } }).Draw.Polygon;
+    const tool = new DrawPolygon2(map as unknown, {
+      showArea: true,
+      allowIntersection: false,
+    } as unknown);
+    currentDrawModeRef.current = 'pasture-redraw';
+    tool.enable();
+    drawToolRef.current = tool;
+    if (onDrawStarted) onDrawStarted();
+  }, [redrawPastureId, mode, map, onDrawStarted]);
 
   // Center map on property or pastures
   useEffect(() => {
@@ -227,16 +291,21 @@ export function PastureMapEditor({
   onPropertyBoundarySave,
   onPastureSave,
   onPastureCreate,
-  mode = 'view'
+  mode = 'view',
+  redrawPastureId
 }: PastureMapEditorProps) {
   const [selectedLayerId, setSelectedLayerId] = useState<string>(DEFAULT_LAYER_ID);
   const selectedLayer = MAP_LAYERS.find(l => l.id === selectedLayerId) || MAP_LAYERS[0];
+  const [requestedDrawMode, setRequestedDrawMode] = useState<'property' | 'pasture' | null>(null);
+  const [isBoundaryLocked, setIsBoundaryLocked] = useState<boolean>(Boolean(propertyMap?.boundary_data?.coordinates));
 
   return (
     <div className="relative w-full h-full">
       <MapContainer
         center={propertyMap?.map_center ? [propertyMap.map_center[1], propertyMap.map_center[0]] : [32.42041750212495, -97.89525682461269]}
         zoom={propertyMap?.map_zoom || 15}
+        maxZoom={22}
+        zoomSnap={0.5}
         style={{ height: '100%', width: '100%' }}
         className="rounded-lg"
       >
@@ -244,6 +313,8 @@ export function PastureMapEditor({
           key={selectedLayerId}
           url={selectedLayer.url}
           attribution={selectedLayer.attribution}
+          maxZoom={22}
+          maxNativeZoom={19}
         />
         
         <MapEditorSetup 
@@ -253,6 +324,10 @@ export function PastureMapEditor({
           onPastureSave={onPastureSave}
           onPastureCreate={onPastureCreate}
           mode={mode}
+          requestedDrawMode={requestedDrawMode}
+          onDrawStarted={() => setRequestedDrawMode(null)}
+          canEditBoundary={!isBoundaryLocked}
+          redrawPastureId={redrawPastureId || null}
         />
 
         {/* Property Boundary */}
@@ -354,7 +429,7 @@ export function PastureMapEditor({
       </MapContainer>
 
       {/* Controls */}
-      <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-lg p-2 space-y-2 min-w-[200px]">
+      <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-lg p-2 space-y-2 min-w-[220px]">
         {/* Map Layer Selector */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-gray-700 flex items-center gap-1">
@@ -374,6 +449,16 @@ export function PastureMapEditor({
             </SelectContent>
           </Select>
         </div>
+
+        {/* Quick Satellite Toggle */}
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setSelectedLayerId(prev => prev === 'esri-imagery' ? DEFAULT_LAYER_ID : 'esri-imagery')}
+          className="w-full"
+        >
+          {selectedLayerId === 'esri-imagery' ? 'Switch to Street' : 'Satellite View'}
+        </Button>
 
         {/* Edit/View Mode Toggle */}
         {mode === 'view' && (
@@ -397,6 +482,40 @@ export function PastureMapEditor({
             <Eye className="h-4 w-4 mr-2" />
             View Mode
           </Button>
+        )}
+
+        {mode === 'edit' && (
+          <div className="space-y-2 pt-2 border-t">
+            <Button
+              size="sm"
+              variant={isBoundaryLocked ? 'outline' : 'default'}
+              className="w-full"
+              onClick={() => setIsBoundaryLocked(!isBoundaryLocked)}
+            >
+              {isBoundaryLocked ? 'Unlock Property Boundary' : 'Lock Property Boundary'}
+            </Button>
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={() => {
+                if (isBoundaryLocked) {
+                  setIsBoundaryLocked(false);
+                  return; // require a second click to actually draw
+                }
+                setRequestedDrawMode('property');
+              }}
+            >
+              Draw Property Boundary
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full"
+              onClick={() => setRequestedDrawMode('pasture')}
+            >
+              Create Pasture
+            </Button>
+          </div>
         )}
       </div>
 

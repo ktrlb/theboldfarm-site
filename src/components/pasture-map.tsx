@@ -96,6 +96,8 @@ export function PastureMap({ pastures, propertyMap, onPastureClick, mode = 'view
       <MapContainer
         center={propertyMap?.map_center ? [propertyMap.map_center[1], propertyMap.map_center[0]] : [32.42041750212495, -97.89525682461269]}
         zoom={propertyMap?.map_zoom || 15}
+        maxZoom={22}
+        zoomSnap={0.5}
         style={{ height: '100%', width: '100%' }}
         className="rounded-lg"
       >
@@ -103,6 +105,8 @@ export function PastureMap({ pastures, propertyMap, onPastureClick, mode = 'view
           key={selectedLayerId}
           url={selectedLayer.url}
           attribution={selectedLayer.attribution}
+          maxZoom={22}
+          maxNativeZoom={19}
         />
         
         <MapCenter pastures={pastures} />
