@@ -915,6 +915,7 @@ export function AnimalGrazingHistory({ animalId }: { animalId: number }) {
     setLoading(true);
     const grazingHistory = await animalContext.getAnimalGrazingHistory(animalId);
     // Map API response to include pasture_name (which may not be in the response)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setHistory(grazingHistory.map((item: any) => ({
       ...item,
       pasture_name: item.pasture_name || null,

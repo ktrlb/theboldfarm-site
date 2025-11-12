@@ -21,7 +21,7 @@ function DialogTrigger({
 function DialogPortal({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
-  return <DialogPrimitive.Portal data-slot="dialog-portal" style={{ zIndex: 99999 }} {...props} />
+  return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
 }
 
 function DialogClose({

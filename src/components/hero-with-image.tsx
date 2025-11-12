@@ -74,12 +74,12 @@ export function HeroWithImage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultImage, JSON.stringify(albumNames)]);
 
-  const hasImage = !loading && heroImage;
+  const hasImage = Boolean(!loading && heroImage);
 
   return (
     <HeroContext.Provider value={{ hasImage }}>
       <section className={`relative overflow-hidden ${className}`}>
-        {hasImage ? (
+        {hasImage && heroImage ? (
           <>
             <div className="absolute inset-0">
               <Image

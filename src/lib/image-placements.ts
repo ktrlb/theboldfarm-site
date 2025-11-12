@@ -1,5 +1,6 @@
 import { getDbInstance } from '@/lib/db/client';
 import { imagePlacements } from '@/lib/db/schema';
+import { PAGE_SECTIONS } from '@/lib/page-sections';
 import { eq, desc, inArray } from 'drizzle-orm';
 
 // Re-export PAGE_SECTIONS from the separate file for server-side use

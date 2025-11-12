@@ -11,6 +11,8 @@ import Link from "next/link";
 import { getGoatAge, getGoatPlaceholder, isGoatForSale, getGoatsForSale } from "@/lib/data";
 import { useDatabase } from "@/lib/database-context";
 import { GoatsHero } from "@/components/goats-hero";
+import { GoatContactModal } from "@/components/goat-contact-modal";
+import { Animal } from "@/lib/db/schema";
 
 
 
@@ -31,6 +33,8 @@ export default function GoatsPage() {
   const { goats, loading, error } = useDatabase();
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [selectedAllGoatsFilter, setSelectedAllGoatsFilter] = useState<FilterType>('all');
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [selectedGoat, setSelectedGoat] = useState<Animal | null>(null);
   
   const allGoats = goats;
   const goatsForSale = getGoatsForSale(goats);
@@ -299,7 +303,14 @@ export default function GoatsPage() {
                         <Button className="w-full bg-gradient-growth hover:opacity-90">
                           Place $100 Deposit
                         </Button>
-                        <Button variant="outline" className="w-full">
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          onClick={() => {
+                            setSelectedGoat(goat);
+                            setContactModalOpen(true);
+                          }}
+                        >
                           Contact About This Goat
                         </Button>
                       </div>
@@ -445,7 +456,14 @@ export default function GoatsPage() {
                       <Button className="w-full bg-gradient-growth hover:opacity-90">
                         Place $100 Deposit
                       </Button>
-                      <Button variant="outline" className="w-full">
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedGoat(goat);
+                          setContactModalOpen(true);
+                        }}
+                      >
                         Contact About This Goat
                       </Button>
                     </div>
@@ -549,6 +567,16 @@ export default function GoatsPage() {
       </section>
 
       <Footer />
+
+      {/* Contact Modal */}
+      <GoatContactModal
+        goat={selectedGoat}
+        open={contactModalOpen}
+        onClose={() => {
+          setContactModalOpen(false);
+          setSelectedGoat(null);
+        }}
+      />
     </div>
   );
 }

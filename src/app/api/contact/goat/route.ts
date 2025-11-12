@@ -6,12 +6,12 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, why, message } = body;
+    const { name, email, phone, message, goatId, goatName } = body;
 
     // Validate required fields
-    if (!name || !email || !why || !message) {
+    if (!name || !email || !message || !goatId || !goatName) {
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: "Name, email, message, goat ID, and goat name are required" },
         { status: 400 }
       );
     }
@@ -29,21 +29,28 @@ export async function POST(request: Request) {
     const { data, error } = await resend.emails.send({
       from: "The Bold Farm <noreply@theboldfarm.com>",
       to: ["karlie@theboldfarm.com"],
-      subject: `Contact Form: ${why}`,
+      subject: `Inquiry About ${goatName}`,
       html: `
-        <h2>New Contact Form Submission</h2>
+        <h2>New Inquiry About ${goatName}</h2>
+        <p><strong>Goat ID:</strong> ${goatId}</p>
+        <p><strong>Goat Name:</strong> ${goatName}</p>
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" />
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Reason:</strong> ${why}</p>
+        ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ''}
         <p><strong>Message:</strong></p>
         <p>${message.replace(/\n/g, "<br>")}</p>
       `,
       text: `
-New Contact Form Submission
+New Inquiry About ${goatName}
 
+Goat ID: ${goatId}
+Goat Name: ${goatName}
+
+---
 Name: ${name}
 Email: ${email}
-Reason: ${why}
+${phone ? `Phone: ${phone}` : ''}
 
 Message:
 ${message}
@@ -63,7 +70,7 @@ ${message}
       { status: 200 }
     );
   } catch (error) {
-    console.error("Contact form error:", error);
+    console.error("Goat contact form error:", error);
     return NextResponse.json(
       { error: "Failed to process contact form", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
