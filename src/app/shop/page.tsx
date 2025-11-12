@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Mail, MapPin } from "lucide-react";
 import Image from "next/image";
+import { ShopHero } from "@/components/shop-hero";
 
 export default function ShopPage() {
 
@@ -11,36 +12,13 @@ export default function ShopPage() {
     <div className="min-h-screen">
       <Navigation />
       
-      {/* Hero Section */}
-      <section className="py-20 bg-orange-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mb-8">
-            <Image
-              src="/theboldfarm-logo.png"
-              alt="The Bold Farm Logo"
-              width={250}
-              height={83}
-              className="mx-auto h-20 w-auto"
-              priority
-            />
-          </div>
-
-          <h1 className="text-4xl font-bold text-gray-900 mb-6">
-            Farm Products & Merchandise
-          </h1>
-          
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Handcrafted products from our farm to yours. From goat milk soap to farm-themed clothing, 
-            we create quality items that celebrate the homestead lifestyle.
-          </p>
-        </div>
-      </section>
+      <ShopHero />
 
       {/* How to Purchase Section */}
       <section className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="mb-12">
-            <MessageCircle className="h-16 w-16 text-orange-600 mx-auto mb-6" />
+            <MessageCircle className="h-16 w-16 text-honey-gold mx-auto mb-6" />
             <h2 className="text-3xl font-bold text-gray-900 mb-4">How to Purchase Our Products</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               We're currently taking orders directly through personal contact. 
@@ -52,7 +30,7 @@ export default function ShopPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <Card className="text-center p-6">
               <CardHeader>
-                <MessageCircle className="h-12 w-12 text-orange-600 mx-auto mb-4" />
+                <MessageCircle className="h-12 w-12 text-honey-gold mx-auto mb-4" />
                 <CardTitle>Facebook</CardTitle>
               </CardHeader>
               <CardContent>
@@ -64,7 +42,7 @@ export default function ShopPage() {
 
             <Card className="text-center p-6">
               <CardHeader>
-                <Mail className="h-12 w-12 text-orange-600 mx-auto mb-4" />
+                <Mail className="h-12 w-12 text-honey-gold mx-auto mb-4" />
                 <CardTitle>Email</CardTitle>
               </CardHeader>
               <CardContent>
@@ -76,7 +54,7 @@ export default function ShopPage() {
 
             <Card className="text-center p-6">
               <CardHeader>
-                <MapPin className="h-12 w-12 text-orange-600 mx-auto mb-4" />
+                <MapPin className="h-12 w-12 text-honey-gold mx-auto mb-4" />
                 <CardTitle>Farmstand Events</CardTitle>
               </CardHeader>
               <CardContent>
@@ -88,7 +66,7 @@ export default function ShopPage() {
           </div>
 
           {/* Product Categories */}
-          <div className="bg-orange-50 rounded-lg p-8 mb-12">
+          <div className="bg-gradient-golden-hour rounded-lg p-8 mb-12">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">What We Offer</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
               <div>
@@ -113,7 +91,7 @@ export default function ShopPage() {
           </div>
 
           {/* Call to Action */}
-          <div className="bg-white border-2 border-orange-200 rounded-lg p-8">
+          <div className="bg-white border-2 border-meadow-green/30 rounded-lg p-8">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to Order?</h3>
             <p className="text-gray-600 mb-6">
               Contact us through Facebook or email to discuss available products and place your order. 
@@ -124,7 +102,7 @@ export default function ShopPage() {
                 <MessageCircle className="h-4 w-4 mr-2" />
                 Message on Facebook
               </Button>
-              <Button variant="outline" className="border-orange-600 text-orange-600 hover:bg-orange-50">
+              <Button variant="outline" className="border-honey-gold text-honey-gold hover:bg-cream">
                 <Mail className="h-4 w-4 mr-2" />
                 Send Email
               </Button>

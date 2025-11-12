@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Polygon, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Polygon, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import 'leaflet-draw';
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Layers, Eye, Map } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import type { PastureWithDetails, PropertyMap } from "@/lib/pasture-types";
+import type { PastureWithDetails, PropertyMap, Gate } from "@/lib/pasture-types";
+import { usePasture } from "@/lib/pasture-context";
 import { MAP_LAYERS, DEFAULT_LAYER_ID } from "@/lib/map-layers";
 import 'leaflet-draw/dist/leaflet.draw.css';
 
@@ -46,7 +47,8 @@ function MapEditorSetup({
   requestedDrawMode,
   onDrawStarted,
   canEditBoundary,
-  redrawPastureId
+  redrawPastureId,
+  onMapClickForGate
 }: {
   pastures: PastureWithDetails[];
   propertyMap: PropertyMap | null;
@@ -58,12 +60,14 @@ function MapEditorSetup({
   onDrawStarted?: () => void;
   canEditBoundary?: boolean;
   redrawPastureId?: number | null;
+  onMapClickForGate?: (lngLat: [number, number]) => void;
 }) {
   const map = useMap();
   const drawControlRef = useRef<L.Control.Draw | null>(null);
   const drawnItemsRef = useRef<L.FeatureGroup | null>(null);
   const currentDrawModeRef = useRef<'property' | 'pasture' | 'pasture-redraw' | null>(null);
   const drawToolRef = useRef<L.Draw.Polygon | null>(null);
+  const handlingCreateRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (mode === 'edit' && !drawControlRef.current) {
@@ -98,6 +102,8 @@ function MapEditorSetup({
       // Handle drawing events
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       map.on(L.Draw.Event.CREATED as any, (e: any) => {
+        if (handlingCreateRef.current) return;
+        handlingCreateRef.current = true;
         const { layer } = e;
         if (drawnItemsRef.current) {
           drawnItemsRef.current.addLayer(layer);
@@ -114,29 +120,26 @@ function MapEditorSetup({
           if (currentDrawModeRef.current === 'property') {
             if (canEditBoundary && onPropertyBoundarySave) onPropertyBoundarySave(coordinates);
             currentDrawModeRef.current = null;
+            setTimeout(() => { handlingCreateRef.current = false; }, 0);
             return;
           }
           if (currentDrawModeRef.current === 'pasture') {
             const pastureName = window.prompt('Enter pasture name:');
             if (pastureName && onPastureCreate) onPastureCreate(pastureName, coordinates);
             currentDrawModeRef.current = null;
+            setTimeout(() => { handlingCreateRef.current = false; }, 0);
             return;
           }
 
           if (currentDrawModeRef.current === 'pasture-redraw' && redrawPastureId && onPastureSave) {
             onPastureSave(redrawPastureId, coordinates);
             currentDrawModeRef.current = null;
+            setTimeout(() => { handlingCreateRef.current = false; }, 0);
             return;
           }
 
-          // Fallback legacy flow
-          const isPropertyBoundary = window.confirm('Is this the property boundary? Click OK for property boundary, Cancel for a new pasture.');
-          if (isPropertyBoundary) {
-            if (onPropertyBoundarySave) onPropertyBoundarySave(coordinates);
-          } else {
-            const pastureName = window.prompt('Enter pasture name:');
-            if (pastureName && onPastureCreate) onPastureCreate(pastureName, coordinates);
-          }
+          // No mode set: ignore to avoid accidental duplicate prompts/creates
+          setTimeout(() => { handlingCreateRef.current = false; }, 0);
         }
       });
 
@@ -267,21 +270,29 @@ function MapEditorSetup({
     }
   }, [pastures, propertyMap, map]);
 
+  // Gate placement
+  useEffect(() => {
+    if (!onMapClickForGate) return;
+    const handler = (e: L.LeafletMouseEvent) => {
+      onMapClickForGate([e.latlng.lng, e.latlng.lat]);
+    };
+    map.on('click', handler);
+    return () => { map.off('click', handler); };
+  }, [map, onMapClickForGate]);
+
   return null;
 }
 
 // Color mapping for pasture status
 function getPastureColor(pasture: PastureWithDetails): string {
-  if (pasture.current_rotation) {
-    return '#16a34a'; // Green
-  }
-  if (pasture.rest_period) {
-    return '#2563eb'; // Blue
-  }
-  if (pasture.quality_rating && pasture.quality_rating < 3) {
-    return '#dc2626'; // Red
-  }
-  return '#eab308'; // Yellow
+  const statuses = Array.isArray((pasture.custom_fields as Record<string, unknown> | null)?.['statuses'])
+    ? (((pasture.custom_fields as Record<string, unknown>)['statuses']) as string[])
+    : [];
+  if (statuses.includes('Off Limits')) return '#6b7280'; // Gray
+  if (pasture.current_rotation) return '#16a34a'; // Green - actively grazed
+  if (statuses.includes('Needs Maintenance')) return '#dc2626'; // Red
+  if (pasture.rest_period || statuses.includes('Resting')) return '#eab308'; // Yellow
+  return '#eab308';
 }
 
 export function PastureMapEditor({ 
@@ -294,13 +305,15 @@ export function PastureMapEditor({
   mode = 'view',
   redrawPastureId
 }: PastureMapEditorProps) {
+  const { gates, addGate, updateGate } = usePasture();
   const [selectedLayerId, setSelectedLayerId] = useState<string>(DEFAULT_LAYER_ID);
   const selectedLayer = MAP_LAYERS.find(l => l.id === selectedLayerId) || MAP_LAYERS[0];
   const [requestedDrawMode, setRequestedDrawMode] = useState<'property' | 'pasture' | null>(null);
   const [isBoundaryLocked, setIsBoundaryLocked] = useState<boolean>(Boolean(propertyMap?.boundary_data?.coordinates));
+  const [isAddingGate, setIsAddingGate] = useState<boolean>(false);
 
   return (
-    <div className="relative w-full h-full">
+    <div className="map-root relative z-0 w-full h-full">
       <MapContainer
         center={propertyMap?.map_center ? [propertyMap.map_center[1], propertyMap.map_center[0]] : [32.42041750212495, -97.89525682461269]}
         zoom={propertyMap?.map_zoom || 15}
@@ -328,6 +341,13 @@ export function PastureMapEditor({
           onDrawStarted={() => setRequestedDrawMode(null)}
           canEditBoundary={!isBoundaryLocked}
           redrawPastureId={redrawPastureId || null}
+          onMapClickForGate={isAddingGate ? async ([lng, lat]) => {
+            setIsAddingGate(false);
+            const name = window.prompt('Gate name:');
+            if (!name) return;
+            const type = window.confirm('Temporary gate? OK = Temporary, Cancel = Permanent') ? 'temporary' : 'permanent';
+            try { await addGate({ name, type: type as 'permanent' | 'temporary', lng, lat, is_open: false, connected_pasture_ids: null, notes: null }); } catch {}
+          } : undefined}
         />
 
         {/* Property Boundary */}
@@ -380,56 +400,33 @@ export function PastureMapEditor({
               eventHandlers={{
                 click: () => onPastureClick && onPastureClick(pasture)
               }}
-            >
-              <Popup>
-                <div className="pasture-popup min-w-[200px]">
-                  <h3 className="font-bold text-lg mb-2">{pasture.name}</h3>
-                  
-                  {pasture.current_rotation && (
-                    <Badge className="bg-green-100 text-green-800 mb-2">
-                      Currently Grazing ({pasture.current_rotation.animal_type})
-                    </Badge>
-                  )}
-                  
-                  {pasture.rest_period && (
-                    <Badge className="bg-blue-100 text-blue-800 mb-2">
-                      Resting
-                    </Badge>
-                  )}
-                  
-                  {!pasture.current_rotation && !pasture.rest_period && (
-                    <Badge variant="outline" className="mb-2">
-                      Available
-                    </Badge>
-                  )}
-
-                  {pasture.quality_rating && (
-                    <div className="mt-2">
-                      <span className="text-sm text-gray-600">Quality: </span>
-                      {[...Array(5)].map((_, i) => (
-                        <span key={i} className={i < pasture.quality_rating! ? 'text-yellow-400' : 'text-gray-300'}>
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {pasture.area_size && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      {pasture.area_size} {pasture.area_unit}
-                    </p>
-                  )}
-                </div>
-              </Popup>
-            </Polygon>
+            />
           );
         })}
+
+        {/* Gates Markers */}
+        {gates.map((gate: Gate) => (
+          <Marker
+            key={gate.id}
+            position={[Number(gate.lat), Number(gate.lng)] as [number, number]}
+            eventHandlers={{
+              click: async () => {
+                if (mode !== 'edit') return;
+                try { await updateGate(gate.id, { is_open: !gate.is_open }); } catch {}
+              }
+            }}
+            icon={L.divIcon({
+              className: 'gate-marker',
+              html: `<div style="width:12px;height:12px;border-radius:50%;background:${gate.is_open ? '#16a34a' : '#dc2626'};border:2px solid white;box-shadow:0 0 0 1px #111"></div>`
+            })}
+          />
+        ))}
 
         {/* Drawing Controls - added via MapEditorSetup */}
       </MapContainer>
 
       {/* Controls */}
-      <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-lg p-2 space-y-2 min-w-[220px]">
+      <div className="absolute top-4 right-4 z-40 bg-white rounded-lg shadow-lg p-2 space-y-2 min-w-[220px]">
         {/* Map Layer Selector */}
         <div className="space-y-1">
           <label className="text-xs font-medium text-gray-700 flex items-center gap-1">
@@ -515,12 +512,20 @@ export function PastureMapEditor({
             >
               Create Pasture
             </Button>
+            <Button
+              size="sm"
+              className="w-full"
+              variant="outline"
+              onClick={() => setIsAddingGate(true)}
+            >
+              Add Gate (click map)
+            </Button>
           </div>
         )}
       </div>
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 z-[1000] border border-gray-200">
+      <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-4 z-40 border border-gray-200">
         <h4 className="font-semibold text-sm mb-2">Status Legend</h4>
         <div className="space-y-1 text-xs">
           <div className="flex items-center gap-2">

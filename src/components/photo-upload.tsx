@@ -188,7 +188,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
         }}
         className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
           dragActive
-            ? 'border-orange-500 bg-orange-50'
+            ? 'border-fresh-sprout-green bg-cream'
             : 'border-gray-300 hover:border-gray-400'
         } ${uploading ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
       >
@@ -205,7 +205,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
         <div className="space-y-2">
           {uploading ? (
             <>
-              <Loader2 className="h-12 w-12 text-orange-600 mx-auto animate-spin" />
+              <Loader2 className="h-12 w-12 text-fresh-sprout-green mx-auto animate-spin" />
               {currentProcessing && (
                 <>
                   <p className="text-sm font-medium text-gray-900">Processing {currentProcessing}</p>
@@ -223,7 +223,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
                     <div key={index} className="text-xs text-gray-600">
                       {progress.status === 'compressing' && (
                         <div className="flex items-center gap-2">
-                          <Loader2 className="h-3 w-3 animate-spin text-orange-600" />
+                          <Loader2 className="h-3 w-3 animate-spin text-fresh-sprout-green" />
                           <span>Compressing {progress.fileName}...</span>
                         </div>
                       )}
@@ -254,7 +254,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
             <>
               <Upload className="h-12 w-12 text-gray-400 mx-auto" />
               <div className="text-sm text-gray-600">
-                <span className="font-semibold text-orange-600">Click to upload</span> or
+                <span className="font-semibold text-fresh-sprout-green">Click to upload</span> or
                 drag and drop
               </div>
               <p className="text-xs text-gray-500">

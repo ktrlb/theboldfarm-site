@@ -296,33 +296,44 @@ function PastureManagementContent() {
                     </div>
                   )}
 
+                  {/* Grazing/Status Summary */}
+                  <div className="mt-2 p-3 rounded border bg-white/60">
+                    {pasture.current_rotation ? (
+                      <div className="text-sm space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-green-100 text-green-800">Actively Grazed</Badge>
+                          <span className="text-gray-700">{pasture.current_rotation.animal_type}</span>
+                        </div>
+                        <div className="text-gray-600">
+                          Since: {new Date(pasture.current_rotation.start_date).toLocaleDateString()} (
+                          {Math.max(0, Math.ceil((Date.now() - new Date(pasture.current_rotation.start_date).getTime()) / (1000 * 60 * 60 * 24)))} days)
+                        </div>
+                        {Array.isArray((pasture.custom_fields as Record<string, unknown> | null)?.['grazingAnimals']) && (
+                          <div className="text-gray-600">
+                            Animals: {((pasture.custom_fields as Record<string, unknown>)['grazingAnimals'] as string[]).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-600">
+                        {Array.isArray((pasture.custom_fields as Record<string, unknown> | null)?.['statuses']) && ((pasture.custom_fields as Record<string, unknown>)['statuses'] as string[]).length > 0
+                          ? `Status: ${((pasture.custom_fields as Record<string, unknown>)['statuses'] as string[]).join(', ')}`
+                          : 'No active grazing'}
+                      </div>
+                    )}
+                    {pasture.last_observation?.notes && (
+                      <div className="text-xs text-gray-500 mt-1 line-clamp-2">
+                        Note: {pasture.last_observation.notes}
+                      </div>
+                    )}
+                  </div>
+
                   {/* Actions */}
                   <div className="flex gap-2 pt-2">
                     <Button size="sm" variant="outline" className="flex-1" onClick={() => setSelectedPasture(pasture)}>
                       <Eye className="h-3 w-3 mr-1" />
                       Details
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 text-red-600 hover:text-red-700"
-                      onClick={async () => {
-                        if (confirm(`Delete pasture "${pasture.name}"? This cannot be undone.`)) {
-                          try {
-                            await deletePasture(pasture.id);
-                          } catch (err) {
-                            alert('Failed to delete pasture');
-                          }
-                        }
-                      }}
-                    >
-                      Delete
-                    </Button>
-                    {!pasture.current_rotation && (
-                      <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700">
-                        Start Grazing
-                      </Button>
-                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -403,7 +414,10 @@ function PastureManagementContent() {
                   />
                 </div>
               ) : (
-                <div className="h-[600px] w-full">
+                <div
+                  className="map-root h-[600px] w-full relative"
+                  style={{ isolation: 'isolate', zIndex: 1, display: selectedPasture ? 'none' : 'block' }}
+                >
                   {isEditMode ? (
                   <PastureMapEditorWrapper
                     pastures={pastures}
@@ -619,8 +633,8 @@ function PastureManagementContent() {
       {/* Pasture Modal */}
       {selectedPasture && (
         <Dialog open={!!selectedPasture} onOpenChange={(open) => !open && setSelectedPasture(null)}>
-          <DialogContent>
-            <DialogHeader>
+          <DialogContent className="p-6 flex flex-col max-h-[90vh]">
+            <DialogHeader className="flex-shrink-0 pb-4">
               <DialogTitle>{selectedPasture.name}</DialogTitle>
               <DialogDescription>
                 {readStringArray(selectedPasture.custom_fields, 'statuses').includes('Off Limits') ? (
@@ -639,8 +653,8 @@ function PastureManagementContent() {
                 )}
               </DialogDescription>
             </DialogHeader>
-            {/* Status and Grazing Controls */}
-            <div className="space-y-4 py-2">
+            {/* Status and Grazing Controls - Scrollable */}
+            <div className="space-y-4 overflow-y-auto flex-1 min-h-0 pr-2 -mr-2">
               <div>
                 <Label className="text-sm">Statuses</Label>
                 <div className="mt-2 grid grid-cols-2 gap-2">
@@ -714,7 +728,7 @@ function PastureManagementContent() {
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0 pt-4 mt-4 border-t">
               <Button
                 className="bg-orange-600 hover:bg-orange-700"
                 onClick={() => {
@@ -756,7 +770,7 @@ function PastureManagementContent() {
                     try {
                       await deletePasture(selectedPasture.id);
                       setSelectedPasture(null);
-                    } catch (err) {
+                    } catch {
                       alert('Failed to delete pasture');
                     }
                   }

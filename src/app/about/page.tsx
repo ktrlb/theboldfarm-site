@@ -3,39 +3,67 @@ import { Footer } from "@/components/footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart, Leaf, Users, Target } from "lucide-react";
 import Image from "next/image";
+import { getImagesFromAlbums } from "@/lib/images";
+import { FarmLogo } from "@/components/farm-logo";
 
-export default function AboutPage() {
+async function AboutHero() {
+  const heroImages = await getImagesFromAlbums(['farm', 'about', 'general', 'site']);
+  const heroImage = heroImages.length > 0 ? heroImages[0] : null;
+
+  return (
+    <section className="relative py-20 overflow-hidden">
+      {heroImage ? (
+        <>
+          <div className="absolute inset-0">
+            <Image
+              src={heroImage}
+              alt="The Bold Farm"
+              fill
+              className="object-cover"
+              priority
+              sizes="100vw"
+            />
+          </div>
+          <div className="absolute inset-0 bg-black/50"></div>
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-cream"></div>
+      )}
+      <div className={`relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center ${heroImage ? 'text-white' : 'text-gray-900'}`}>
+        <div className="mb-8">
+          <div className="flex justify-center">
+            <FarmLogo 
+              variant={heroImage ? "dark" : "light"} 
+              full={true} 
+              size="lg" 
+              className="drop-shadow-lg"
+              priority 
+            />
+          </div>
+        </div>
+
+        <p className={`text-xl max-w-3xl mx-auto drop-shadow-lg ${heroImage ? 'text-white' : 'text-deep-earth-brown'}`}>
+          We're passionate about sustainable farming, quality livestock, and building a community 
+          around traditional homesteading values.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+export default async function AboutPage() {
   return (
     <div className="min-h-screen">
       <Navigation />
       
-      {/* Hero Section */}
-      <section className="py-20 bg-orange-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mb-8">
-            <Image
-              src="/theboldfarm-logo.png"
-              alt="The Bold Farm Logo"
-              width={250}
-              height={83}
-              className="mx-auto h-20 w-auto"
-              priority
-            />
-          </div>
-
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            We're passionate about sustainable farming, quality livestock, and building a community 
-            around traditional homesteading values.
-          </p>
-        </div>
-      </section>
+      <AboutHero />
 
       {/* Our Story */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">Our Story</h2>
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-6">Our Story</h2>
               <p className="text-lg text-gray-600 mb-6">
                 The Bold Farm began with a simple dream: to create a sustainable, family-run operation 
                 that could provide quality livestock and products while preserving traditional farming methods.
@@ -50,12 +78,7 @@ export default function AboutPage() {
                 from the care we provide to the products we create.
               </p>
             </div>
-            <div className="bg-orange-100 rounded-lg p-8 text-center">
-              <div className="text-6xl mb-4">🐐</div>
-              <p className="text-lg text-gray-700 font-medium">
-                "Building a sustainable future, one animal at a time."
-              </p>
-            </div>
+            <AboutStoryImage />
           </div>
         </div>
       </section>
@@ -64,7 +87,7 @@ export default function AboutPage() {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Values</h2>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-4">Our Values</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               These core principles guide everything we do at The Bold Farm.
             </p>
@@ -73,8 +96,8 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <Card className="text-center hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <Heart className="h-8 w-8 text-orange-600" />
+                <div className="mx-auto w-16 h-16 bg-gradient-growth rounded-full flex items-center justify-center mb-4">
+                  <Heart className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Animal Welfare</CardTitle>
               </CardHeader>
@@ -88,8 +111,8 @@ export default function AboutPage() {
 
             <Card className="text-center hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <Leaf className="h-8 w-8 text-orange-600" />
+                <div className="mx-auto w-16 h-16 bg-gradient-growth rounded-full flex items-center justify-center mb-4">
+                  <Leaf className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Sustainability</CardTitle>
               </CardHeader>
@@ -102,8 +125,8 @@ export default function AboutPage() {
 
             <Card className="text-center hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <Users className="h-8 w-8 text-orange-600" />
+                <div className="mx-auto w-16 h-16 bg-gradient-growth rounded-full flex items-center justify-center mb-4">
+                  <Users className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Community</CardTitle>
               </CardHeader>
@@ -116,8 +139,8 @@ export default function AboutPage() {
 
             <Card className="text-center hover:shadow-lg transition-shadow">
               <CardHeader>
-                <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <Target className="h-8 w-8 text-orange-600" />
+                <div className="mx-auto w-16 h-16 bg-gradient-growth rounded-full flex items-center justify-center mb-4">
+                  <Target className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Quality</CardTitle>
               </CardHeader>
@@ -135,14 +158,14 @@ export default function AboutPage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">What We Do</h2>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-4">What We Do</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               From livestock breeding to homestead products, we offer a variety of services and products.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-orange-50 rounded-lg p-8">
+            <div className="bg-cream border border-meadow-green/20 rounded-lg p-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Livestock Breeding</h3>
               <ul className="space-y-3 text-gray-600">
                 <li>• Nigerian Dwarf dairy goats for sale</li>
@@ -152,7 +175,7 @@ export default function AboutPage() {
               </ul>
             </div>
 
-            <div className="bg-orange-50 rounded-lg p-8">
+            <div className="bg-cream border border-meadow-green/20 rounded-lg p-8">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Homestead Products</h3>
               <ul className="space-y-3 text-gray-600">
                 <li>• Handmade soaps and lotions</li>
@@ -166,9 +189,9 @@ export default function AboutPage() {
       </section>
 
       {/* Future Plans */}
-      <section className="py-16 bg-orange-50">
+      <section className="py-16 bg-cream">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6">Looking to the Future</h2>
+          <h2 className="text-3xl md:text-4xl font-serif font-bold text-gray-900 mb-6">Looking to the Future</h2>
           <p className="text-lg text-gray-600 mb-8 max-w-3xl mx-auto">
             We're excited to expand our offerings to include workshops, farm tours, and educational 
             programs. Our goal is to share our knowledge and passion for sustainable farming with 
@@ -187,6 +210,39 @@ export default function AboutPage() {
       </section>
 
       <Footer />
+    </div>
+  );
+}
+
+async function AboutStoryImage() {
+  const storyImages = await getImagesFromAlbums(['farm', 'animals', 'goats', 'Farm', 'Animals', 'Goats']);
+  const storyImage = storyImages.length > 0 ? storyImages[0] : null;
+
+  return (
+    <div className="relative h-full min-h-[300px] rounded-lg overflow-hidden">
+      {storyImage ? (
+        <>
+          <Image
+            src={storyImage}
+            alt="The Bold Farm"
+            fill
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+          />
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+            <p className="text-lg text-white font-medium px-8 text-center drop-shadow-lg">
+              "Building a sustainable future, one animal at a time."
+            </p>
+          </div>
+        </>
+      ) : (
+        <div className="bg-gradient-growth rounded-lg p-8 text-center h-full flex flex-col items-center justify-center">
+          <div className="text-6xl mb-4">🐐</div>
+          <p className="text-lg text-gray-700 font-medium">
+            "Building a sustainable future, one animal at a time."
+          </p>
+        </div>
+      )}
     </div>
   );
 }

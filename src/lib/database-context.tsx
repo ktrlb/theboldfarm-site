@@ -1,30 +1,32 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Database } from "./database-types";
-import { GoatRow, ProductRow } from "./data";
+import { Animal } from "@/lib/db/schema";
+import { ProductRow } from "./data";
 
-type GoatUpdate = Database['public']['Tables']['goats']['Update'];
-type ProductUpdate = Database['public']['Tables']['products']['Update'];
-
-interface SupabaseContextType {
-  goats: GoatRow[];
+interface DatabaseContextType {
+  // Goats - for backwards compatibility, filtered from animals
+  goats: Animal[];
+  // Animals - the new unified animal system
+  animals: Animal[];
   products: ProductRow[];
   loading: boolean;
   error: string | null;
-  addGoat: (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
-  updateGoat: (id: number, updates: Partial<GoatUpdate>) => Promise<void>;
+  // Goat methods - for backwards compatibility
+  addGoat: (goat: Omit<Animal, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateGoat: (id: number, updates: Partial<Animal>) => Promise<void>;
   deleteGoat: (id: number) => Promise<void>;
+  // Product methods
   addProduct: (product: Omit<ProductRow, 'id' | 'created_at'>) => Promise<void>;
-  updateProduct: (id: number, updates: Partial<ProductUpdate>) => Promise<void>;
+  updateProduct: (id: number, updates: Partial<ProductRow>) => Promise<void>;
   deleteProduct: (id: number) => Promise<void>;
   refreshData: () => Promise<void>;
 }
 
-const DatabaseContext = createContext<SupabaseContextType | undefined>(undefined);
+const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
 
 export function DatabaseProvider({ children }: { children: ReactNode }) {
-  const [goats, setGoats] = useState<GoatRow[]>([]);
+  const [animals, setAnimals] = useState<Animal[]>([]);
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,28 +46,37 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
       console.log('Fetching data from Neon database...');
 
       // Fetch from API routes that use Drizzle + Neon
-      const [goatsRes, productsRes] = await Promise.all([
-        fetch('/api/goats'),
+      // Use /api/animals for all animals, or /api/goats for backwards compatibility
+      const [animalsRes, productsRes] = await Promise.all([
+        fetch('/api/animals'),
         fetch('/api/products')
       ]);
 
-      if (!goatsRes.ok) {
-        throw new Error(`Failed to fetch goats: ${goatsRes.statusText}`);
+      let animalsData: Animal[] = [];
+      if (!animalsRes.ok) {
+        // Fallback to /api/goats for backwards compatibility
+        const goatsRes = await fetch('/api/goats');
+        if (goatsRes.ok) {
+          animalsData = await goatsRes.json();
+        } else {
+          throw new Error(`Failed to fetch animals: ${animalsRes.statusText}`);
+        }
+      } else {
+        animalsData = await animalsRes.json();
       }
+      setAnimals(animalsData || []);
 
       if (!productsRes.ok) {
         throw new Error(`Failed to fetch products: ${productsRes.statusText}`);
       }
 
-      const goatsData = await goatsRes.json();
       const productsData = await productsRes.json();
 
       console.log('Data fetched successfully from Neon:', {
-        goats: goatsData.length,
+        animals: animalsData.length,
         products: productsData.length
       });
 
-      setGoats(goatsData || []);
       setProducts(productsData || []);
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -83,30 +94,42 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
       }
       
       setError(errorMessage);
-      setGoats([]);
+      setAnimals([]);
       setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Add a new goat
-  const addGoat = async (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => {
+  // Add a new goat (for backwards compatibility - uses animals API)
+  const addGoat = async (goat: Omit<Animal, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       setError(null);
 
-      const res = await fetch('/api/goats', {
+      // Ensure animal_type is set to 'Goat' if not provided
+      const animalData = { ...goat, animal_type: goat.animal_type || 'Goat' };
+
+      // Try animals API first, fallback to goats API
+      let res = await fetch('/api/animals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(goat),
+        body: JSON.stringify(animalData),
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to create goat');
+        // Fallback to goats API for backwards compatibility
+        res = await fetch('/api/goats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(goat),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Failed to create goat');
+        }
       }
 
-      const data = await res.json();
       await fetchData(); // Refresh all data
     } catch (err) {
       console.error('Error adding goat:', err);
@@ -115,18 +138,28 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Update an existing goat
-  const updateGoat = async (id: number, updates: Partial<GoatUpdate>) => {
+  // Update an existing goat (for backwards compatibility - uses animals API)
+  const updateGoat = async (id: number, updates: Partial<Animal>) => {
     try {
-      const res = await fetch(`/api/goats/${id}`, {
+      // Try animals API first, fallback to goats API
+      let res = await fetch(`/api/animals/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to update goat');
+        // Fallback to goats API for backwards compatibility
+        res = await fetch(`/api/goats/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Failed to update goat');
+        }
       }
 
       await fetchData(); // Refresh all data
@@ -137,16 +170,24 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Delete a goat
+  // Delete a goat (for backwards compatibility - uses animals API)
   const deleteGoat = async (id: number) => {
     try {
-      const res = await fetch(`/api/goats/${id}`, {
+      // Try animals API first, fallback to goats API
+      let res = await fetch(`/api/animals/${id}`, {
         method: 'DELETE',
       });
 
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to delete goat');
+        // Fallback to goats API for backwards compatibility
+        res = await fetch(`/api/goats/${id}`, {
+          method: 'DELETE',
+        });
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Failed to delete goat');
+        }
       }
 
       await fetchData(); // Refresh all data
@@ -180,7 +221,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   };
 
   // Update an existing product
-  const updateProduct = async (id: number, updates: Partial<ProductUpdate>) => {
+  const updateProduct = async (id: number, updates: Partial<ProductRow>) => {
     try {
       const res = await fetch(`/api/products/${id}`, {
         method: 'PUT',
@@ -231,9 +272,13 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     fetchData();
   }, []);
 
+  // Filter goats from animals for backwards compatibility
+  const goats = animals.filter(animal => animal.animal_type === 'Goat');
+
   return (
     <DatabaseContext.Provider value={{
-      goats,
+      goats, // Backwards compatibility
+      animals, // New unified animal system
       products,
       loading,
       error,
@@ -250,9 +295,6 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Export with both names for compatibility
-export const SupabaseProvider = DatabaseProvider;
-
 export function useDatabase() {
   const context = useContext(DatabaseContext);
   if (context === undefined) {
@@ -261,5 +303,3 @@ export function useDatabase() {
   return context;
 }
 
-// Export with old name for compatibility
-export const useSupabase = useDatabase;

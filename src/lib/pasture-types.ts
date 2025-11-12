@@ -93,6 +93,19 @@ export interface PropertyMap {
   updated_at: string;
 }
 
+export interface Gate {
+  id: number;
+  name: string;
+  type: 'permanent' | 'temporary';
+  lng: number;
+  lat: number;
+  is_open: boolean;
+  connected_pasture_ids: number[] | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Helper types for form data
 export type PastureFormData = Omit<Pasture, 'id' | 'created_at' | 'updated_at'>;
 export type GrazingRotationFormData = Omit<GrazingRotation, 'id' | 'created_at' | 'updated_at'>;

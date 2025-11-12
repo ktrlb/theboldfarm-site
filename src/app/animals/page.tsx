@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, Star, Egg, Award } from "lucide-react";
 import Link from "next/link";
 import { getGoatAge, getGoatPlaceholder } from "@/lib/data";
-import { useSupabase } from "@/lib/database-context";
-import Image from "next/image";
+import { useDatabase } from "@/lib/database-context";
+import { AnimalsHero } from "@/components/animals-hero";
 
 // Filter options
 const FILTER_OPTIONS = [
@@ -26,7 +26,7 @@ const FILTER_OPTIONS = [
 type FilterType = typeof FILTER_OPTIONS[number]['id'];
 
 export default function AnimalsPage() {
-  const { goats, loading, error } = useSupabase();
+  const { goats, loading, error } = useDatabase();
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   
   // Filter logic for goats
@@ -62,7 +62,7 @@ export default function AnimalsPage() {
         <Navigation />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fresh-sprout-green mx-auto mb-4"></div>
             <p className="text-gray-600">Loading farm animals...</p>
           </div>
         </div>
@@ -93,33 +93,14 @@ export default function AnimalsPage() {
     <div className="min-h-screen">
       <Navigation />
       
-      {/* Hero Section */}
-      <section className="py-20 bg-orange-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mb-8">
-            <Image
-              src="/theboldfarm-logo.png"
-              alt="The Bold Farm Logo"
-              width={250}
-              height={83}
-              className="mx-auto h-20 w-auto"
-              priority
-            />
-          </div>
-
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Get to know the wonderful animals that call The Bold Farm home. Each one has a unique 
-            personality and story to share.
-          </p>
-        </div>
-      </section>
+      <AnimalsHero />
 
       {/* Goats Section */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 rounded-full mb-6">
-              <Heart className="h-10 w-10 text-orange-600" />
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-growth rounded-full mb-6">
+              <Heart className="h-10 w-10 text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Nigerian Dwarf Goats</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -135,11 +116,11 @@ export default function AnimalsPage() {
                 key={option.id}
                 variant={selectedFilter === option.id ? "default" : "outline"}
                 onClick={() => setSelectedFilter(option.id)}
-                className={`px-6 py-2 rounded-full transition-all ${
-                  selectedFilter === option.id
-                    ? "bg-orange-600 text-white hover:bg-orange-700"
-                    : "border-orange-200 text-gray-700 hover:border-orange-300 hover:bg-orange-50"
-                }`}
+                  className={`px-6 py-2 rounded-full transition-all ${
+                    selectedFilter === option.id
+                      ? "bg-gradient-growth text-white hover:opacity-90"
+                      : "border-meadow-green/50 text-bold-black hover:border-fresh-sprout-green hover:bg-cream"
+                  }`}
               >
                 {option.label}
               </Button>
@@ -151,7 +132,7 @@ export default function AnimalsPage() {
             <p className="text-gray-600">
               Showing {filteredGoats.length} of {goats.length} goats
               {selectedFilter !== 'all' && (
-                <span className="ml-2 text-orange-600 font-medium">
+                <span className="ml-2 text-fresh-sprout-green font-medium">
                   • {FILTER_OPTIONS.find(opt => opt.id === selectedFilter)?.label}
                 </span>
               )}
@@ -168,7 +149,7 @@ export default function AnimalsPage() {
               <Button 
                 variant="outline" 
                 onClick={() => setSelectedFilter('all')}
-                className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                  className="border-honey-gold text-honey-gold hover:bg-cream"
               >
                 Show All Goats
               </Button>
@@ -177,7 +158,7 @@ export default function AnimalsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredGoats.map((goat) => (
                 <Card key={goat.id} className="hover:shadow-lg transition-shadow">
-                  <div className="h-48 bg-orange-100 rounded-t-lg overflow-hidden">
+                  <div className="h-48 bg-gradient-earth-to-light rounded-t-lg overflow-hidden">
                     {goat.photos && goat.photos.length > 0 ? (
                       <img
                         src={goat.photos[0]}
@@ -193,7 +174,7 @@ export default function AnimalsPage() {
                   <CardHeader>
                     <div className="flex justify-between items-start mb-2">
                       <CardTitle className="text-xl">{goat.name}</CardTitle>
-                      <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">
+                      <Badge className="bg-gradient-growth text-white hover:opacity-90">
                         {goat.type}
                       </Badge>
                     </div>
@@ -210,7 +191,7 @@ export default function AnimalsPage() {
                       <span>{goat.registered ? "Registered" : "Unregistered"}</span>
                     </div>
                     <div className="space-y-2">
-                      <Button asChild className="w-full bg-orange-600 hover:bg-orange-700">
+                      <Button asChild className="w-full bg-gradient-growth hover:opacity-90">
                         <Link href="/goats">View Details</Link>
                       </Button>
                       {goat.is_for_sale && (
@@ -226,7 +207,7 @@ export default function AnimalsPage() {
           )}
 
           <div className="text-center mt-12">
-            <Button asChild size="lg" className="bg-orange-600 hover:bg-orange-700">
+            <Button asChild size="lg" className="bg-gradient-growth hover:opacity-90">
               <Link href="/goats">View All Goats</Link>
             </Button>
           </div>
@@ -237,8 +218,8 @@ export default function AnimalsPage() {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 rounded-full mb-6">
-              <Star className="h-10 w-10 text-orange-600" />
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-growth rounded-full mb-6">
+              <Star className="h-10 w-10 text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Family Cows</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -249,7 +230,7 @@ export default function AnimalsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-64 bg-orange-100 rounded-t-lg flex items-center justify-center">
+              <div className="h-64 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
                 <div className="text-6xl">🐄</div>
               </div>
               <CardHeader>
@@ -262,7 +243,7 @@ export default function AnimalsPage() {
             </Card>
 
             <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-64 bg-orange-100 rounded-t-lg flex items-center justify-center">
+              <div className="h-64 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
                 <div className="text-6xl">🐄</div>
               </div>
               <CardHeader>
@@ -281,8 +262,8 @@ export default function AnimalsPage() {
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 rounded-full mb-6">
-              <Egg className="h-10 w-10 text-orange-600" />
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-growth rounded-full mb-6">
+              <Egg className="h-10 w-10 text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Chickens & Eggs</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -293,7 +274,7 @@ export default function AnimalsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-40 bg-orange-100 rounded-t-lg flex items-center justify-center">
+              <div className="h-40 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
                 <div className="text-6xl">🐔</div>
               </div>
               <CardHeader>
@@ -305,7 +286,7 @@ export default function AnimalsPage() {
             </Card>
 
             <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-40 bg-orange-100 rounded-t-lg flex items-center justify-center">
+              <div className="h-40 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
                 <div className="text-6xl">🥚</div>
               </div>
               <CardHeader>
@@ -317,7 +298,7 @@ export default function AnimalsPage() {
             </Card>
 
             <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-40 bg-orange-100 rounded-t-lg flex items-center justify-center">
+              <div className="h-40 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
                 <div className="text-6xl">🐣</div>
               </div>
               <CardHeader>
@@ -335,8 +316,8 @@ export default function AnimalsPage() {
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-orange-100 rounded-full mb-6">
-              <Heart className="h-10 w-10 text-orange-600" />
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-growth rounded-full mb-6">
+              <Heart className="h-10 w-10 text-white" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Farm Dogs</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -347,7 +328,7 @@ export default function AnimalsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-64 bg-orange-100 rounded-t-lg flex items-center justify-center">
+              <div className="h-64 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
                 <div className="text-6xl">🐕</div>
               </div>
               <CardHeader>
@@ -360,7 +341,7 @@ export default function AnimalsPage() {
             </Card>
 
             <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-64 bg-orange-100 rounded-t-lg flex items-center justify-center">
+              <div className="h-64 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
                 <div className="text-6xl">🐕</div>
               </div>
               <CardHeader>
@@ -376,7 +357,7 @@ export default function AnimalsPage() {
       </section>
 
       {/* Visit CTA */}
-      <section className="py-16 bg-orange-50">
+      <section className="py-16 bg-gradient-golden-hour">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">
             Want to Meet Them in Person?
@@ -386,7 +367,7 @@ export default function AnimalsPage() {
             goats, cows, chickens, and farm dogs.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-orange-600 hover:bg-orange-700">
+            <Button asChild size="lg" className="bg-gradient-growth hover:opacity-90">
               <Link href="/contact">Schedule a Visit</Link>
             </Button>
             <Button asChild variant="outline" size="lg">

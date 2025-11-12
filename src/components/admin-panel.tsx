@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { getGoatAge, getGoatPlaceholder, GoatRow, ProductRow } from "@/lib/data";
-import { useSupabase } from "@/lib/database-context";
+import { useDatabase } from "@/lib/database-context";
 import { Database } from "@/lib/database-types";
 import { PhotoUpload } from "@/components/photo-upload";
 
@@ -19,39 +19,50 @@ interface AdminPanelProps {
 }
 
 export function AdminPanel({ onLogout }: AdminPanelProps) {
-  const { goats, products, addGoat: addGoatToSupabase, updateGoat: updateGoatInSupabase, deleteGoat: deleteGoatFromSupabase, addProduct: addProductToSupabase, updateProduct: updateProductInSupabase, deleteProduct: deleteProductFromSupabase, loading, error } = useSupabase();
+  const { goats, products, addGoat, updateGoat, deleteGoat, addProduct, updateProduct, deleteProduct, loading, error } = useDatabase();
 
   const [editingGoat, setEditingGoat] = useState<GoatRow | null>(null);
   const [editingProduct, setEditingProduct] = useState<ProductRow | null>(null);
   const [showAddGoat, setShowAddGoat] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
 
-  const addGoat = async (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => {
-    await addGoatToSupabase(goat);
+  const handleAddGoat = async (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => {
+    // Convert to new Animal format with required fields
+    await addGoat({
+      ...goat,
+      animal_type: 'Goat',
+      custom_fields: {}, // GoatRow doesn't have custom_fields, use empty object
+      price: String(goat.price || 0), // Convert number to string for Animal type
+    });
     setShowAddGoat(false);
   };
 
-  const updateGoat = async (id: number, updates: Partial<Database['public']['Tables']['goats']['Update']>) => {
-    await updateGoatInSupabase(id, updates);
+  const handleUpdateGoat = async (id: number, updates: Partial<Database['public']['Tables']['goats']['Update']>) => {
+    // Convert updates to Animal format if needed
+    const animalUpdates: any = {
+      ...updates,
+      ...(updates.price !== undefined && { price: String(updates.price) }),
+    };
+    await updateGoat(id, animalUpdates);
     setEditingGoat(null);
   };
 
-  const deleteGoat = async (id: number) => {
-    await deleteGoatFromSupabase(id);
+  const handleDeleteGoat = async (id: number) => {
+    await deleteGoat(id);
   };
 
-  const addProduct = async (product: Omit<ProductRow, 'id' | 'created_at'>) => {
-    await addProductToSupabase(product);
+  const handleAddProduct = async (product: Omit<ProductRow, 'id' | 'created_at'>) => {
+    await addProduct(product);
     setShowAddProduct(false);
   };
 
-  const updateProduct = async (id: number, updates: Partial<Database['public']['Tables']['products']['Update']>) => {
-    await updateProductInSupabase(id, updates);
+  const handleUpdateProduct = async (id: number, updates: Partial<Database['public']['Tables']['products']['Update']>) => {
+    await updateProduct(id, updates);
     setEditingProduct(null);
   };
 
-  const deleteProduct = async (id: number) => {
-    await deleteProductFromSupabase(id);
+  const handleDeleteProduct = async (id: number) => {
+    await deleteProduct(id);
   };
 
   return (
@@ -126,7 +137,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                     Enter the details for the new goat.
                   </DialogDescription>
                 </DialogHeader>
-                <AddGoatForm onSubmit={addGoat} onClose={() => setShowAddGoat(false)} />
+                <AddGoatForm onSubmit={handleAddGoat} onClose={() => setShowAddGoat(false)} />
               </DialogContent>
             </Dialog>
           </div>
@@ -153,7 +164,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => deleteGoat(goat.id)}
+                      onClick={() => handleDeleteGoat(goat.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -207,7 +218,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                     Enter the details for the new product.
                   </DialogDescription>
                 </DialogHeader>
-                <AddProductForm onSubmit={addProduct} onClose={() => setShowAddProduct(false)} />
+                <AddProductForm onSubmit={handleAddProduct} onClose={() => setShowAddProduct(false)} />
               </DialogContent>
             </Dialog>
           </div>
@@ -258,7 +269,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => deleteProduct(product.id)}
+                    onClick={() => handleDeleteProduct(product.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -279,7 +290,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 Update the goat's information.
               </DialogDescription>
             </DialogHeader>
-            <EditGoatForm goat={editingGoat} onSubmit={(updates) => updateGoat(editingGoat!.id, updates)} onClose={() => setEditingGoat(null)} />
+            <EditGoatForm goat={editingGoat} onSubmit={(updates) => handleUpdateGoat(editingGoat!.id, updates)} onClose={() => setEditingGoat(null)} />
           </DialogContent>
         </Dialog>
       )}
@@ -294,7 +305,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 Update the product's information.
               </DialogDescription>
             </DialogHeader>
-            <EditProductForm product={editingProduct} onSubmit={(updates) => updateProduct(editingProduct!.id, updates)} onClose={() => setEditingProduct(null)} />
+            <EditProductForm product={editingProduct} onSubmit={(updates) => handleUpdateProduct(editingProduct!.id, updates)} onClose={() => setEditingProduct(null)} />
           </DialogContent>
         </Dialog>
       )}

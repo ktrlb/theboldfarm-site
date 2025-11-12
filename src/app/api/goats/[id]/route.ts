@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDbInstance } from '@/lib/db/client';
-import { goats } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { animals } from '@/lib/db/schema';
+import { eq, and } from 'drizzle-orm';
 
 export async function PUT(
   request: Request,
@@ -18,10 +18,17 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
+    
+    // Ensure animal_type remains 'Goat' for backwards compatibility
+    const updateData = { ...body, animal_type: 'Goat', updated_at: new Date() };
+
     const [updatedGoat] = await db
-      .update(goats)
-      .set({ ...body, updated_at: new Date() })
-      .where(eq(goats.id, parseInt(id)))
+      .update(animals)
+      .set(updateData)
+      .where(and(
+        eq(animals.id, parseInt(id)),
+        eq(animals.animal_type, 'Goat')
+      ))
       .returning();
     
     return NextResponse.json(updatedGoat);
@@ -48,7 +55,13 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    await db.delete(goats).where(eq(goats.id, parseInt(id)));
+    // Only delete if it's a goat (backwards compatibility)
+    await db
+      .delete(animals)
+      .where(and(
+        eq(animals.id, parseInt(id)),
+        eq(animals.animal_type, 'Goat')
+      ));
     
     return NextResponse.json({ success: true });
   } catch (error) {

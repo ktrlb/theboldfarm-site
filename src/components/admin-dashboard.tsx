@@ -5,23 +5,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { useSupabase } from "@/lib/database-context";
-import { getGoatAge, getGoatPlaceholder, GoatRow, ProductRow } from "@/lib/data";
+import { Plus, Edit, Trash2, Settings } from "lucide-react";
+import { useDatabase } from "@/lib/database-context";
+import { ProductRow } from "@/lib/data";
 import { Database } from "@/lib/database-types";
 import { PhotoUpload } from "@/components/photo-upload";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AddGoatForm, EditGoatForm, AddProductForm, EditProductForm } from "@/components/admin-panel";
+import { AnimalManagementSection } from "@/components/animal-management-section";
+import { AnimalProvider } from "@/lib/animal-context";
+import { AddProductForm, EditProductForm } from "@/components/admin-panel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { ImageAlbum } from "@/lib/db/schema";
+import { ImagePlacementHelper } from "./image-placement-helper";
 
 interface AdminDashboardProps {
   onLogout?: () => void;
 }
 
-export function AdminDashboard({ onLogout }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState("goats");
+export function AdminDashboard({ onLogout: _onLogout }: AdminDashboardProps) {
+  const [activeTab, setActiveTab] = useState("animals");
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -32,8 +35,8 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-5 mb-8">
-          <TabsTrigger value="goats">
-            Goat Management
+          <TabsTrigger value="animals">
+            Animal Management
           </TabsTrigger>
           <TabsTrigger value="products">
             Product Management
@@ -49,8 +52,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="goats">
-          <GoatManagementSection />
+        <TabsContent value="animals">
+          <AnimalProvider>
+            <AnimalManagementSection />
+          </AnimalProvider>
         </TabsContent>
 
         <TabsContent value="products">
@@ -78,120 +83,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
   );
 }
 
-// Goat Management Section - extract from existing admin-panel.tsx
-function GoatManagementSection() {
-  const { goats, addGoat, updateGoat, deleteGoat, loading } = useSupabase();
-  const [editingGoat, setEditingGoat] = useState<GoatRow | null>(null);
-  const [showAddGoat, setShowAddGoat] = useState(false);
-
-  const handleAddGoat = async (goat: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>) => {
-    await addGoat(goat);
-    setShowAddGoat(false);
-  };
-
-  const handleUpdateGoat = async (id: number, updates: Partial<Database['public']['Tables']['goats']['Update']>) => {
-    await updateGoat(id, updates);
-    setEditingGoat(null);
-  };
-
-  const handleDeleteGoat = async (id: number) => {
-    if (confirm('Are you sure you want to delete this goat?')) {
-      await deleteGoat(id);
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Goat Management</h2>
-          <p className="text-gray-600 mt-1">Manage your goat listings and information</p>
-        </div>
-        <Dialog open={showAddGoat} onOpenChange={setShowAddGoat}>
-          <DialogTrigger asChild>
-            <Button className="bg-orange-600 hover:bg-orange-700">
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Goat
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Add New Goat</DialogTitle>
-              <DialogDescription>Add a new goat to your farm listings</DialogDescription>
-            </DialogHeader>
-            <AddGoatForm onSubmit={handleAddGoat} onClose={() => setShowAddGoat(false)} />
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading goats...</p>
-        </div>
-      ) : goats.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <p className="text-gray-600">No goats added yet. Click "Add New Goat" to get started.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {goats.map((goat) => (
-            <Card key={goat.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg">{goat.name || 'Unnamed Goat'}</CardTitle>
-                    <CardDescription>{goat.type}</CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setEditingGoat(goat)}>
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDeleteGoat(goat.id)} className="text-red-600 hover:text-red-700">
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {goat.photos && goat.photos.length > 0 ? (
-                  <img src={goat.photos[0]} alt={goat.name || 'Goat'} className="w-full h-48 object-cover rounded-lg mb-4" />
-                ) : (
-                  <div className="w-full h-48 rounded-lg mb-4 bg-orange-50 border border-gray-200 flex items-center justify-center text-6xl">
-                    {getGoatPlaceholder(goat)}
-                  </div>
-                )}
-                <div className="space-y-2 text-sm">
-                  <p className="font-medium">{getGoatAge(goat)}</p>
-                  {goat.is_for_sale && <p className="text-orange-600 font-semibold">${Number(goat.price).toFixed(2)}</p>}
-                  {goat.bio && <p className="text-gray-600 line-clamp-3">{goat.bio}</p>}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {editingGoat && (
-        <Dialog open={!!editingGoat} onOpenChange={(open) => !open && setEditingGoat(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Goat</DialogTitle>
-              <DialogDescription>Update goat information</DialogDescription>
-            </DialogHeader>
-            <EditGoatForm goat={editingGoat} onSubmit={(updates) => handleUpdateGoat(editingGoat.id, updates)} onClose={() => setEditingGoat(null)} />
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
-  );
-}
 
 // Product Management Section
 function ProductManagementSection() {
-  const { products, addProduct, updateProduct, deleteProduct, loading } = useSupabase();
+  const { products, addProduct, updateProduct, deleteProduct, loading } = useDatabase();
   const [editingProduct, setEditingProduct] = useState<ProductRow | null>(null);
   const [showAddProduct, setShowAddProduct] = useState(false);
 
@@ -220,7 +115,7 @@ function ProductManagementSection() {
         </div>
         <Dialog open={showAddProduct} onOpenChange={setShowAddProduct}>
           <DialogTrigger asChild>
-            <Button className="bg-orange-600 hover:bg-orange-700">
+            <Button className="bg-gradient-growth hover:opacity-90">
               <Plus className="h-4 w-4 mr-2" />
               Add New Product
             </Button>
@@ -237,7 +132,7 @@ function ProductManagementSection() {
 
       {loading ? (
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fresh-sprout-green mx-auto mb-4"></div>
           <p className="text-gray-600">Loading products...</p>
         </div>
       ) : products.length === 0 ? (
@@ -268,11 +163,11 @@ function ProductManagementSection() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 text-sm">
-                  <p className="text-orange-600 font-semibold">${Number(product.price).toFixed(2)}</p>
+                  <p className="text-fresh-sprout-green font-semibold">${Number(product.price).toFixed(2)}</p>
                   {product.description && <p className="text-gray-600 line-clamp-3">{product.description}</p>}
                   <div className="flex gap-2">
                     {product.in_stock && <span className="text-green-600 text-xs">In Stock</span>}
-                    {product.featured && <span className="text-orange-600 text-xs">Featured</span>}
+                    {product.featured && <span className="text-fresh-sprout-green text-xs">Featured</span>}
                   </div>
                 </div>
               </CardContent>
@@ -328,6 +223,7 @@ function ImageManagementSection() {
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [showAddAlbum, setShowAddAlbum] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showPlacementHelper, setShowPlacementHelper] = useState(false);
 
   // Fetch albums on mount
   useEffect(() => {
@@ -356,7 +252,7 @@ function ImageManagementSection() {
       await navigator.clipboard.writeText(url);
       setCopiedUrl(url);
       setTimeout(() => setCopiedUrl(null), 2000);
-    } catch (err) {
+    } catch {
       alert('Failed to copy URL');
     }
   };
@@ -372,8 +268,8 @@ function ImageManagementSection() {
         await fetchAlbums();
         setShowAddAlbum(false);
       }
-    } catch (err) {
-      console.error('Error creating album:', err);
+    } catch (error) {
+      console.error('Error creating album:', error);
       alert('Failed to create album');
     }
   };
@@ -392,8 +288,8 @@ function ImageManagementSection() {
       if (res.ok) {
         await fetchAlbums();
       }
-    } catch (err) {
-      console.error('Error adding images:', err);
+    } catch (error) {
+      console.error('Error adding images:', error);
       alert('Failed to add images to album');
     }
   };
@@ -415,11 +311,27 @@ function ImageManagementSection() {
           <h2 className="text-2xl font-bold text-gray-900">Image Management</h2>
           <p className="text-gray-600 mt-1">Organize images into albums for easy access</p>
         </div>
-        <Button onClick={() => setShowAddAlbum(true)} className="bg-orange-600 hover:bg-orange-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Album
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowPlacementHelper(!showPlacementHelper)} 
+            variant={showPlacementHelper ? "default" : "outline"}
+              className={showPlacementHelper ? "bg-gradient-growth hover:opacity-90" : ""}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            {showPlacementHelper ? 'Hide' : 'Show'} Placement Helper
+          </Button>
+          <Button onClick={() => setShowAddAlbum(true)} className="bg-gradient-growth hover:opacity-90">
+            <Plus className="h-4 w-4 mr-2" />
+            Create Album
+          </Button>
+        </div>
       </div>
+
+      {showPlacementHelper && (
+        <div className="border-t pt-6">
+          <ImagePlacementHelper albums={albums} />
+        </div>
+      )}
 
       {/* Album Selection */}
       {albums.length > 0 && (
@@ -429,11 +341,11 @@ function ImageManagementSection() {
               key={album.id}
               variant={selectedAlbum?.id === album.id ? 'default' : 'outline'}
               onClick={() => setSelectedAlbum(album)}
-              className={selectedAlbum?.id === album.id ? 'bg-orange-600 hover:bg-orange-700' : ''}
+              className={selectedAlbum?.id === album.id ? 'bg-gradient-growth hover:opacity-90' : ''}
             >
               {album.name}
               {album.images && album.images.length > 0 && (
-                <Badge className="ml-2 bg-white text-orange-600">
+                <Badge className="ml-2 bg-white text-fresh-sprout-green">
                   {album.images.length}
                 </Badge>
               )}

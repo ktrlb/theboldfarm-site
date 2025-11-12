@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -7,21 +10,51 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, MapPin, Clock } from "lucide-react";
+import { ContactHero } from "@/components/contact-hero";
+import { toast } from "sonner";
 
 export default function ContactPage() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    why: "",
+    message: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      toast.success("Message sent successfully! We'll get back to you soon.");
+      setFormData({ name: "", email: "", why: "", message: "" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <Navigation />
       
-      {/* Hero Section */}
-      <section className="py-20 bg-orange-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Have questions about our goats, want to visit the farm, or interested in our products? 
-            We'd love to hear from you!
-          </p>
-        </div>
-      </section>
+      <ContactHero />
 
       {/* Contact Form and Info */}
       <section className="py-16 bg-white">
@@ -30,41 +63,47 @@ export default function ContactPage() {
             {/* Contact Form */}
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-6">Send us a Message</h2>
-              <form className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input id="firstName" placeholder="Your first name" required />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input id="lastName" placeholder="Your last name" required />
-                  </div>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <Label htmlFor="name">Your Name *</Label>
+                  <Input 
+                    id="name" 
+                    placeholder="Your name" 
+                    required 
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
                 </div>
 
                 <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input id="email" type="email" placeholder="your.email@example.com" required />
+                  <Label htmlFor="email">Your Email *</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="your.email@example.com" 
+                    required 
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  />
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" placeholder="(555) 123-4567" />
-                </div>
-
-                <div>
-                  <Label htmlFor="subject">Subject *</Label>
-                  <Select>
+                  <Label htmlFor="why">Why *</Label>
+                  <Select 
+                    value={formData.why} 
+                    onValueChange={(value) => setFormData({ ...formData, why: value })}
+                    required
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a subject" />
+                      <SelectValue placeholder="Select a reason" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="goats">Goat Information/Sales</SelectItem>
-                      <SelectItem value="cows">Cow Information/Sales</SelectItem>
-                      <SelectItem value="products">Product Inquiries</SelectItem>
-                      <SelectItem value="visit">Farm Visit</SelectItem>
-                      <SelectItem value="workshop">Workshop Information</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="Goat Information/Sales">Goat Information/Sales</SelectItem>
+                      <SelectItem value="Cow Information/Sales">Cow Information/Sales</SelectItem>
+                      <SelectItem value="Product Inquiries">Product Inquiries</SelectItem>
+                      <SelectItem value="Farm Visit">Farm Visit</SelectItem>
+                      <SelectItem value="Workshop Information">Workshop Information</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -76,11 +115,18 @@ export default function ContactPage() {
                     placeholder="Tell us more about your inquiry..." 
                     rows={5}
                     required 
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   />
                 </div>
 
-                <Button type="submit" size="lg" className="w-full bg-orange-600 hover:bg-orange-700">
-                  Send Message
+                <Button 
+                  type="submit" 
+                  size="lg" 
+                  className="w-full bg-gradient-growth hover:opacity-90"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             </div>
@@ -99,13 +145,13 @@ export default function ContactPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <Mail className="h-5 w-5 mr-2 text-orange-600" />
+                      <Mail className="h-5 w-5 mr-2 text-honey-gold" />
                       Email
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <CardDescription>
-                      <a href="mailto:karlie@theboldfarm.com" className="text-orange-600 hover:text-orange-700">
+                      <a href="mailto:karlie@theboldfarm.com" className="text-honey-gold hover:text-fresh-sprout-green">
                         karlie@theboldfarm.com
                       </a>
                     </CardDescription>
@@ -115,14 +161,14 @@ export default function ContactPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <MapPin className="h-5 w-5 mr-2 text-orange-600" />
+                      <MapPin className="h-5 w-5 mr-2 text-honey-gold" />
                       Location
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <CardDescription>
                       Visit by appointment only<br />
-                      We're located in [Your Area] and welcome visitors who want to see our animals 
+                      We're located in Hood County, Texas and welcome visitors who want to see our animals 
                       and learn more about our operation.
                     </CardDescription>
                   </CardContent>
@@ -131,7 +177,7 @@ export default function ContactPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <Clock className="h-5 w-5 mr-2 text-orange-600" />
+                      <Clock className="h-5 w-5 mr-2 text-honey-gold" />
                       Response Time
                     </CardTitle>
                   </CardHeader>
@@ -145,7 +191,7 @@ export default function ContactPage() {
               </div>
 
               {/* Visit Information */}
-              <div className="bg-orange-50 rounded-lg p-6">
+              <div className="bg-cream border border-meadow-green/20 rounded-lg p-6">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Planning a Visit?</h3>
                 <p className="text-gray-600 mb-4">
                   We love sharing our farm with visitors! Here's what you should know:

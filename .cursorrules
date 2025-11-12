@@ -84,9 +84,43 @@ Images & Uploads
 - Process uploads sequentially; show progress states (Compressing, Uploading, Complete)
 - Use Next Image component for rendering when possible; prefer WebP for static assets
 
+Branding & Design
+- Typography:
+  - Primary sans-serif: Lato (weights: 300, 400, 700, 900)
+    - Use Lato Black (900) for bold, impactful text (e.g., "BOLD" in logo)
+    - Default body text: Lato Regular (400)
+  - Serif/Display: DM Serif Display (weight: 400)
+    - Use for elegant headings and decorative text (e.g., "the" and "farm" in logo)
+- Brand Colors (from branding guide):
+  - Bold Black: #1A1A1A - primary text color
+  - Deep Earth Brown: #3D2817 - earth tones, backgrounds
+  - Fresh Sprout Green: #7CB342 - growth elements, sprout icon, green buttons
+  - Meadow Green: #A8D08D - supporting green tones
+  - Cream: #F5F1E8 - light backgrounds, cards
+  - Honey Gold: #E8C547 - CTAs, highlights, accents
+  - Sky Blue: #5B9BD5 - atmospheric elements
+- Brand Gradients:
+  - Growth: Fresh Sprout Green → Meadow Green (sprout icon, green buttons)
+  - Earth to Light: Deep Earth Brown → Cream (backgrounds, cards)
+  - Golden Hour: Honey Gold → Cream (CTAs, highlights)
+  - Atmospheric: Sky Blue → Meadow Green → Honey Gold (hero overlays)
+  - Seasonal Spectrum: Fresh Sprout Green → Honey Gold → Sky Blue
+- Logo Usage:
+  - Full logo: "the BOLD farm" (DM Serif Display for "the"/"farm", Lato Black for "BOLD")
+  - Short logo: "BOLD" with sprout in O (Lato Black)
+  - Use black text on light backgrounds, white text on dark backgrounds
+  - Logo files in /public: theboldfarm_BOLD, theboldfarm_theBOLDfarm (black/white variants)
+  - Header/navigation: Use full logo (full={true})
+- Design Principles:
+  - Clean, modern farm aesthetic
+  - Earth tones and natural colors from brand palette
+  - Elegant serif for headings, clean sans-serif for body
+  - High contrast for readability
+  - Use brand gradients for visual interest and depth
+
 Performance & UX
 - Mobile-first responsive design
-- Orange (#orange-600) as primary brand color
+- Orange (#orange-600 / #ea580c) as primary brand color
 - Use Suspense for client components; lazy load non-critical features
 - Optimize Web Vitals (LCP, CLS, FID)
 - Keep bundle sizes lean

@@ -80,8 +80,8 @@ export function AdminAuth({ onAuthenticated }: AdminAuthProps) {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-            <Lock className="h-8 w-8 text-orange-600" />
+          <div className="mx-auto w-16 h-16 bg-gradient-growth rounded-full flex items-center justify-center mb-4">
+            <Lock className="h-8 w-8 text-white" />
           </div>
           <CardTitle className="text-2xl">Admin Access</CardTitle>
           <CardDescription>
@@ -140,7 +140,7 @@ export function AdminAuth({ onAuthenticated }: AdminAuthProps) {
 
             <Button 
               type="submit" 
-              className="w-full bg-orange-600 hover:bg-orange-700"
+              className="w-full bg-gradient-growth hover:opacity-90"
               disabled={isLoading || isLocked}
             >
               {isLoading ? "Checking..." : isLocked ? "Account Locked" : "Access Admin Panel"}

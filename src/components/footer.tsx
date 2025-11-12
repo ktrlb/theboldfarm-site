@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Mail, MapPin } from "lucide-react";
-import Image from "next/image";
+import { FarmLogo } from "@/components/farm-logo";
 
 export function Footer() {
   return (
@@ -9,7 +9,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Farm Info */}
           <div>
-            <h3 className="text-xl font-bold mb-4">The Bold Farm</h3>
+            <h3 className="text-xl font-serif font-bold mb-4">The Bold Farm</h3>
             <p className="text-gray-300 mb-4">
               Quality Nigerian Dwarf dairy goats, family cows, and homestead products. 
               Building a sustainable future, one animal at a time.
@@ -18,7 +18,7 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-xl font-bold mb-4">Quick Links</h3>
+            <h3 className="text-xl font-serif font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/about" className="text-gray-300 hover:text-white transition-colors">
@@ -45,16 +45,16 @@ export function Footer() {
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-xl font-bold mb-4">Contact Us</h3>
+            <h3 className="text-xl font-serif font-bold mb-4">Contact Us</h3>
             <div className="space-y-3">
               <div className="flex items-center text-gray-300">
-                <Mail className="h-5 w-5 mr-2 text-orange-500" />
+                <Mail className="h-5 w-5 mr-2 text-honey-gold" />
                 <a href="mailto:karlie@theboldfarm.com" className="hover:text-white transition-colors">
                   karlie@theboldfarm.com
                 </a>
               </div>
               <div className="flex items-center text-gray-300">
-                <MapPin className="h-5 w-5 mr-2 text-orange-500" />
+                <MapPin className="h-5 w-5 mr-2 text-honey-gold" />
                 <span>Visit by appointment</span>
               </div>
             </div>
@@ -63,13 +63,7 @@ export function Footer() {
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center">
           <div className="flex flex-col items-center space-y-4">
-            <Image
-              src="/theboldfarm-logo.png"
-              alt="The Bold Farm Logo"
-              width={100}
-              height={33}
-              className="h-8 w-auto filter brightness-0 invert"
-            />
+            <FarmLogo variant="dark" full={false} size="sm" />
             <p className="text-gray-400">&copy; {new Date().getFullYear()} The Bold Farm. All rights reserved.</p>
           </div>
         </div>

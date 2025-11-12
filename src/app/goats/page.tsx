@@ -9,8 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { DollarSign, Calendar, Award } from "lucide-react";
 import Link from "next/link";
 import { getGoatAge, getGoatPlaceholder, isGoatForSale, getGoatsForSale } from "@/lib/data";
-import { useSupabase } from "@/lib/database-context";
-import Image from "next/image";
+import { useDatabase } from "@/lib/database-context";
+import { GoatsHero } from "@/components/goats-hero";
 
 
 
@@ -28,7 +28,7 @@ const FILTER_OPTIONS = [
 type FilterType = typeof FILTER_OPTIONS[number]['id'];
 
 export default function GoatsPage() {
-  const { goats, loading, error } = useSupabase();
+  const { goats, loading, error } = useDatabase();
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [selectedAllGoatsFilter, setSelectedAllGoatsFilter] = useState<FilterType>('all');
   
@@ -94,7 +94,7 @@ export default function GoatsPage() {
         <Navigation />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fresh-sprout-green mx-auto mb-4"></div>
             <p className="text-gray-600">Loading goats...</p>
           </div>
         </div>
@@ -124,26 +124,7 @@ export default function GoatsPage() {
     <div className="min-h-screen">
       <Navigation />
       
-      {/* Hero Section */}
-      <section className="py-20 bg-orange-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="mb-8">
-            <Image
-              src="/theboldfarm-logo.png"
-              alt="The Bold Farm Logo"
-              width={250}
-              height={83}
-              className="mx-auto h-20 w-auto"
-              priority
-            />
-          </div>
-
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Quality Nigerian Dwarf goats available for your homestead. All our goats are healthy, 
-            well-socialized, and come with ongoing support.
-          </p>
-        </div>
-      </section>
+      <GoatsHero />
 
       {/* Pricing & Deposit Info */}
       <section className="py-12 bg-white border-b border-gray-200">
@@ -151,8 +132,8 @@ export default function GoatsPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <DollarSign className="h-8 w-8 text-orange-600" />
+                <div className="mx-auto w-16 h-16 bg-gradient-growth rounded-full flex items-center justify-center mb-4">
+                  <DollarSign className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Pricing</CardTitle>
               </CardHeader>
@@ -166,8 +147,8 @@ export default function GoatsPage() {
 
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <Calendar className="h-8 w-8 text-orange-600" />
+                <div className="mx-auto w-16 h-16 bg-gradient-growth rounded-full flex items-center justify-center mb-4">
+                  <Calendar className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Reservations</CardTitle>
               </CardHeader>
@@ -181,8 +162,8 @@ export default function GoatsPage() {
 
             <Card className="text-center">
               <CardHeader>
-                <div className="mx-auto w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                  <Award className="h-8 w-8 text-orange-600" />
+                <div className="mx-auto w-16 h-16 bg-gradient-growth rounded-full flex items-center justify-center mb-4">
+                  <Award className="h-8 w-8 text-white" />
                 </div>
                 <CardTitle>Quality Guarantee</CardTitle>
               </CardHeader>
@@ -218,8 +199,8 @@ export default function GoatsPage() {
                   onClick={() => setSelectedFilter(option.id)}
                   className={`px-6 py-2 rounded-full transition-all ${
                     selectedFilter === option.id
-                      ? "bg-orange-600 text-white hover:bg-orange-700"
-                      : "border-orange-200 text-gray-700 hover:border-orange-300 hover:bg-orange-50"
+                      ? "bg-gradient-growth text-white hover:opacity-90"
+                      : "border-meadow-green/50 text-bold-black hover:border-fresh-sprout-green hover:bg-cream"
                   }`}
                 >
                   {option.label}
@@ -232,7 +213,7 @@ export default function GoatsPage() {
               <p className="text-gray-600">
                 Showing {filteredGoatsForSale.length} of {goatsForSale.length} goats
                 {selectedFilter !== 'all' && (
-                  <span className="ml-2 text-orange-600 font-medium">
+                  <span className="ml-2 text-fresh-sprout-green font-medium">
                     • {FILTER_OPTIONS.find(opt => opt.id === selectedFilter)?.label}
                   </span>
                 )}
@@ -249,7 +230,7 @@ export default function GoatsPage() {
                 <Button 
                   variant="outline" 
                   onClick={() => setSelectedFilter('all')}
-                  className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                  className="border-honey-gold text-honey-gold hover:bg-cream"
                 >
                   Show All Goats for Sale
                 </Button>
@@ -257,8 +238,8 @@ export default function GoatsPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredGoatsForSale.map((goat) => (
-                <Card key={goat.id} className="hover:shadow-lg transition-shadow border-2 border-orange-200">
-                  <div className="h-64 bg-orange-100 rounded-t-lg overflow-hidden">
+                <Card key={goat.id} className="hover:shadow-lg transition-shadow border-2 border-meadow-green/30">
+                  <div className="h-64 bg-gradient-earth-to-light rounded-t-lg overflow-hidden">
                     {goat.photos && goat.photos.length > 0 ? (
                       <div className="relative w-full h-full">
                         <img
@@ -283,7 +264,7 @@ export default function GoatsPage() {
                       <CardTitle className="text-xl">{goat.name}</CardTitle>
                       <Badge 
                         variant={goat.status === "Available" ? "default" : "secondary"}
-                        className="bg-orange-100 text-orange-800 hover:bg-orange-200"
+                        className="bg-gradient-growth text-white hover:opacity-90"
                       >
                         {goat.status}
                       </Badge>
@@ -296,7 +277,7 @@ export default function GoatsPage() {
                     <div className="space-y-2">
                       <div className="flex items-center text-sm text-gray-600">
                         <DollarSign className="h-4 w-4 mr-2" />
-                        <span className="font-medium text-lg text-orange-600">${goat.price}</span>
+                        <span className="font-medium text-lg text-fresh-sprout-green">${goat.price}</span>
                       </div>
                       <div className="flex items-center text-sm text-gray-600">
                         <Award className="h-4 w-4 mr-2" />
@@ -315,7 +296,7 @@ export default function GoatsPage() {
 
                     {goat.status === "Available" ? (
                       <div className="space-y-3">
-                        <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                        <Button className="w-full bg-gradient-growth hover:opacity-90">
                           Place $100 Deposit
                         </Button>
                         <Button variant="outline" className="w-full">
@@ -358,8 +339,8 @@ export default function GoatsPage() {
                 onClick={() => setSelectedAllGoatsFilter(option.id)}
                 className={`px-6 py-2 rounded-full transition-all ${
                   selectedAllGoatsFilter === option.id
-                    ? "bg-orange-600 text-white hover:bg-orange-700"
-                    : "border-orange-200 text-gray-700 hover:border-orange-300 hover:bg-orange-50"
+                    ? "bg-gradient-growth text-white hover:opacity-90"
+                    : "border-meadow-green/50 text-bold-black hover:border-fresh-sprout-green hover:bg-cream"
                 }`}
               >
                 {option.label === 'All Goats for Sale' ? 'All Goats' : option.label}
@@ -372,7 +353,7 @@ export default function GoatsPage() {
             <p className="text-gray-600">
               Showing {filteredAllGoats.length} of {allGoats.length} goats
               {selectedAllGoatsFilter !== 'all' && (
-                <span className="ml-2 text-orange-600 font-medium">
+                <span className="ml-2 text-fresh-sprout-green font-medium">
                   • {FILTER_OPTIONS.find(opt => opt.id === selectedAllGoatsFilter)?.label.replace('All Goats for Sale', 'All Goats')}
                 </span>
               )}
@@ -389,7 +370,7 @@ export default function GoatsPage() {
               <Button 
                 variant="outline" 
                 onClick={() => setSelectedAllGoatsFilter('all')}
-                className="border-orange-600 text-orange-600 hover:bg-orange-50"
+                className="border-honey-gold text-honey-gold hover:bg-cream"
               >
                 Show All Goats
               </Button>
@@ -398,7 +379,7 @@ export default function GoatsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredAllGoats.map((goat) => (
               <Card key={goat.id} className="hover:shadow-lg transition-shadow">
-                <div className="h-64 bg-orange-100 rounded-t-lg overflow-hidden">
+                <div className="h-64 bg-gradient-earth-to-light rounded-t-lg overflow-hidden">
                   {goat.photos && goat.photos.length > 0 ? (
                     <div className="relative w-full h-full">
                       <img
@@ -423,7 +404,7 @@ export default function GoatsPage() {
                     <CardTitle className="text-xl">{goat.name}</CardTitle>
                     <Badge 
                       variant={goat.status === "Available" ? "default" : "secondary"}
-                      className="bg-orange-100 text-orange-800 hover:bg-orange-200"
+                      className="bg-gradient-growth text-white hover:opacity-90"
                     >
                       {goat.status}
                     </Badge>
@@ -461,7 +442,7 @@ export default function GoatsPage() {
 
                   {isGoatForSale(goat) && goat.status === "Available" ? (
                     <div className="space-y-3">
-                      <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                      <Button className="w-full bg-gradient-growth hover:opacity-90">
                         Place $100 Deposit
                       </Button>
                       <Button variant="outline" className="w-full">
@@ -502,7 +483,7 @@ export default function GoatsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-48 bg-orange-100 rounded-t-lg flex items-center justify-center">
+                <div className="h-48 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
                 <div className="text-6xl">🐐</div>
               </div>
               <CardHeader>
@@ -516,14 +497,14 @@ export default function GoatsPage() {
                   Several of our does are due to kid this spring. Kids will be available 
                   for reservation with a $100 deposit.
                 </p>
-                <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                <Button className="w-full bg-gradient-growth hover:opacity-90">
                   Reserve Your Spot
                 </Button>
               </CardContent>
             </Card>
 
             <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-48 bg-orange-100 rounded-t-lg flex items-center justify-center">
+                <div className="h-48 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
                 <div className="text-6xl">🐐</div>
               </div>
               <CardHeader>
@@ -537,7 +518,7 @@ export default function GoatsPage() {
                   Fall kidding season will bring more adorable kids. Perfect timing for 
                   those planning spring milk production.
                 </p>
-                <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                <Button className="w-full bg-gradient-growth hover:opacity-90">
                   Reserve Your Spot
                 </Button>
               </CardContent>
@@ -547,7 +528,7 @@ export default function GoatsPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-orange-50">
+      <section className="py-16 bg-gradient-golden-hour">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">
             Ready to Add Goats to Your Homestead?
@@ -557,7 +538,7 @@ export default function GoatsPage() {
             breeding program, we're here to help you find the perfect match.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-orange-600 hover:bg-orange-700">
+            <Button asChild size="lg" className="bg-gradient-growth hover:opacity-90">
               <Link href="/contact">Get in Touch</Link>
             </Button>
             <Button asChild variant="outline" size="lg">

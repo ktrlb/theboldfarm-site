@@ -1,10 +1,12 @@
 // Shared data for the farm website
 import { Database } from './database-types';
+import { Animal } from './db/schema';
 
+// Legacy type for backwards compatibility
 type GoatRow = Database['public']['Tables']['goats']['Row'];
 type ProductRow = Database['public']['Tables']['products']['Row'];
 
-// Initial goats data using Supabase types
+// Initial goats data (legacy - now uses Animal type from schema)
 export const initialGoats: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>[] = [
   {
     name: "Bella",
@@ -113,7 +115,7 @@ export const initialGoats: Omit<GoatRow, 'id' | 'created_at' | 'updated_at'>[] =
   }
 ];
 
-// Initial products data using Supabase types
+// Initial products data
 export const initialProducts: Omit<ProductRow, 'id' | 'created_at'>[] = [
   {
     name: "Lavender Goat Milk Soap",
@@ -125,10 +127,10 @@ export const initialProducts: Omit<ProductRow, 'id' | 'created_at'>[] = [
   }
 ];
 
-// Helper function to calculate goat age using Supabase types
-export function getGoatAge(goat: GoatRow): string {
-  if (goat.birth_type === 'exact' && goat.birth_date) {
-    const birthDate = new Date(goat.birth_date);
+// Helper function to calculate animal age (works with Animal or GoatRow)
+export function getGoatAge(animal: Animal | GoatRow): string {
+  if (animal.birth_type === 'exact' && animal.birth_date) {
+    const birthDate = new Date(animal.birth_date);
     
     // Validate the date
     if (isNaN(birthDate.getTime())) {
@@ -152,7 +154,7 @@ export function getGoatAge(goat: GoatRow): string {
   } else {
     // Just year - calculate approximate age
     const currentYear = new Date().getFullYear();
-    const birthYear = parseInt(goat.birth_date || currentYear.toString());
+    const birthYear = parseInt(animal.birth_date || currentYear.toString());
     
     // Validate the year
     if (isNaN(birthYear) || birthYear > currentYear) {
@@ -170,31 +172,30 @@ export function getGoatAge(goat: GoatRow): string {
   }
 }
 
-// Helper function to generate cute placeholder images
-export function getGoatPlaceholder(goat: GoatRow): string {
+// Helper function to generate cute placeholder images (works with Animal or any object with name)
+export function getGoatPlaceholder(animal: Animal | GoatRow | { name: string }): string {
   const placeholders = [
     "🐐", "🐑", "🦙", "🦌", "🐄", "🐖", "🐎", "🐓", "🦆", "🦢"
   ];
-  // Use goat's name to consistently generate the same placeholder
-  const index = goat.name.charCodeAt(0) % placeholders.length;
+  // Use animal's name to consistently generate the same placeholder
+  const index = animal.name.charCodeAt(0) % placeholders.length;
   return placeholders[index];
 }
 
-// Helper function to check if a goat is for sale
-export function isGoatForSale(goat: GoatRow): boolean {
-  // Since we've updated the schema, all goats should have is_for_sale
-  return goat.is_for_sale;
+// Helper function to check if an animal is for sale (works with Animal or GoatRow)
+export function isGoatForSale(animal: Animal | GoatRow): boolean {
+  return animal.is_for_sale;
 }
 
-// Helper function to get goats for sale
-export function getGoatsForSale(goats: GoatRow[]): GoatRow[] {
-  return goats.filter(isGoatForSale);
+// Helper function to get animals for sale (works with Animal or GoatRow arrays)
+export function getGoatsForSale<T extends Animal | GoatRow>(animals: T[]): T[] {
+  return animals.filter(isGoatForSale);
 }
 
-// Helper function to get all goats (for sale or not)
-export function getAllGoats(goats: GoatRow[]): GoatRow[] {
-  return goats;
+// Helper function to get all animals (for sale or not)
+export function getAllGoats<T extends Animal | GoatRow>(animals: T[]): T[] {
+  return animals;
 }
 
-// Export the Supabase types for use in other components
+// Export the database types for use in other components
 export type { GoatRow, ProductRow };

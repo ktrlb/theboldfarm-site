@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import { FarmLogo } from "@/components/farm-logo";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -19,20 +19,13 @@ export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <nav className="bg-white border-b border-orange-200 sticky top-0 z-50 shadow-sm">
+    <nav className="bg-cream border-b border-meadow-green/30 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
-              <Image
-                src="/theboldfarm-logo.png"
-                alt="The Bold Farm Logo"
-                width={120}
-                height={40}
-                className="h-10 w-auto"
-                priority
-              />
+              <FarmLogo variant="light" full={true} size="md" className="drop-shadow-sm" priority />
             </Link>
           </div>
 
@@ -43,7 +36,7 @@ export function Navigation() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-gray-700 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                  className="text-bold-black hover:text-fresh-sprout-green px-3 py-2 rounded-md text-sm font-medium transition-colors"
                 >
                   {item.name}
                 </Link>
@@ -52,7 +45,7 @@ export function Navigation() {
               {/* Admin Link */}
               <Link
                 href="/admin"
-                className="text-gray-500 hover:text-orange-600 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
+                className="text-deep-earth-brown hover:text-fresh-sprout-green px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
                 title="Admin Panel"
               >
                 <Settings className="h-4 w-4" />
@@ -67,7 +60,7 @@ export function Navigation() {
               variant="ghost"
               size="sm"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-gray-700 hover:text-orange-600"
+              className="text-bold-black hover:text-fresh-sprout-green"
             >
               <span className="sr-only">Open main menu</span>
               {mobileMenuOpen ? (
@@ -83,12 +76,12 @@ export function Navigation() {
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
         <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-orange-200">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-cream border-t border-meadow-green/30">
             {navigation.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-gray-700 hover:text-orange-600 block px-3 py-2 rounded-md text-base font-medium transition-colors"
+                className="text-bold-black hover:text-fresh-sprout-green block px-3 py-2 rounded-md text-base font-medium transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item.name}
@@ -99,7 +92,7 @@ export function Navigation() {
             <div className="border-t border-gray-200 pt-2 mt-2">
               <Link
                 href="/admin"
-                className="text-gray-500 hover:text-orange-600 flex items-center px-3 py-2 rounded-md text-base font-medium transition-colors"
+                className="text-deep-earth-brown hover:text-fresh-sprout-green flex items-center px-3 py-2 rounded-md text-base font-medium transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Settings className="h-4 w-4 mr-2" />

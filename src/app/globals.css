@@ -2,15 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure modals render above Leaflet map */
+.leaflet-container { z-index: 0 !important; }
+.leaflet-pane { z-index: 200 !important; }
+.leaflet-top, .leaflet-bottom { z-index: 300 !important; }
+
+/* When a dialog is open, force map beneath overlays */
+.dialog-open .leaflet-container { z-index: -1 !important; pointer-events: none !important; }
+.dialog-open .leaflet-pane { z-index: -1 !important; pointer-events: none !important; }
+.dialog-open .leaflet-top, .dialog-open .leaflet-bottom { z-index: -1 !important; pointer-events: none !important; }
+
+/* Ensure dialog portal container is above everything */
+[data-radix-portal] { z-index: 99999 !important; }
+
+/* As a last resort, hide the map root while dialogs are open */
+.dialog-open .map-root { display: none !important; }
+
+/* Custom scrollbar for dialog content */
+[data-slot="dialog-content"] div[class*="overflow-y-auto"]::-webkit-scrollbar {
+  width: 8px;
+}
+
+[data-slot="dialog-content"] div[class*="overflow-y-auto"]::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+[data-slot="dialog-content"] div[class*="overflow-y-auto"]::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+[data-slot="dialog-content"] div[class*="overflow-y-auto"]::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gray-50 text-gray-900 font-sans;
+  }
+  
+  /* Brand typography styles */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans;
+  }
+  
+  /* Use serif font for elegant headings (like "the" and "farm" in logo) */
+  .font-serif-display {
+    font-family: var(--font-serif);
+  }
+  
+  /* Use Lato Black (900) for bold, impactful text (like "BOLD" in logo) */
+  .font-bold-black {
+    font-family: var(--font-sans);
+    font-weight: 900;
   }
 }
 
-/* Simple farm theme styles */
+/* Brand gradient styles */
 .farm-gradient {
-  background: linear-gradient(135deg, #fef3c7 0%, #fef9e7 100%);
+  background: linear-gradient(135deg, #F5F1E8 0%, #E8C547 100%);
+}
+
+.gradient-growth {
+  background: linear-gradient(135deg, #7CB342 0%, #A8D08D 100%);
+}
+
+.gradient-earth-to-light {
+  background: linear-gradient(135deg, #3D2817 0%, #F5F1E8 100%);
+}
+
+.gradient-golden-hour {
+  background: linear-gradient(135deg, #E8C547 0%, #F5F1E8 100%);
+}
+
+.gradient-atmospheric {
+  background: linear-gradient(135deg, #5B9BD5 0%, #A8D08D 50%, #E8C547 100%);
+}
+
+.gradient-seasonal {
+  background: linear-gradient(135deg, #7CB342 0%, #E8C547 50%, #5B9BD5 100%);
 }
 
 .text-shadow {

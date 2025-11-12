@@ -7,7 +7,8 @@ import type {
   PastureObservation, 
   PastureRestPeriod,
   PropertyMap,
-  PastureWithDetails 
+  PastureWithDetails,
+  Gate
 } from "./pasture-types";
 
 interface PastureContextType {
@@ -16,6 +17,7 @@ interface PastureContextType {
   observations: PastureObservation[];
   restPeriods: PastureRestPeriod[];
   propertyMap: PropertyMap | null;
+  gates: Gate[];
   loading: boolean;
   error: string | null;
   
@@ -39,6 +41,10 @@ interface PastureContextType {
   // Property Map functions
   savePropertyBoundary: (coordinates: number[][]) => Promise<void>;
   savePropertyLocation: (center: [number, number], zoom: number) => Promise<void>;
+  // Gates
+  addGate: (gate: Omit<Gate, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  updateGate: (id: number, updates: Partial<Gate>) => Promise<void>;
+  deleteGate: (id: number) => Promise<void>;
   
   // Utility functions
   refreshData: () => Promise<void>;
@@ -55,6 +61,7 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   const [observations, setObservations] = useState<PastureObservation[]>([]);
   const [restPeriods, setRestPeriods] = useState<PastureRestPeriod[]>([]);
   const [propertyMap, setPropertyMap] = useState<PropertyMap | null>(null);
+  const [gates, setGates] = useState<Gate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,12 +80,13 @@ export function PastureProvider({ children }: { children: ReactNode }) {
       setError(null);
 
       // Fetch all data in parallel
-      const [pasturesRes, rotationsRes, observationsRes, restPeriodsRes, propertyMapRes] = await Promise.all([
+      const [pasturesRes, rotationsRes, observationsRes, restPeriodsRes, propertyMapRes, gatesRes] = await Promise.all([
         fetch('/api/pastures'),
         fetch('/api/rotations'),
         fetch('/api/observations'),
         fetch('/api/rest-periods'),
         fetch('/api/property-map'),
+        fetch('/api/gates'),
       ]);
 
       if (!pasturesRes.ok) throw new Error('Failed to fetch pastures');
@@ -91,6 +99,7 @@ export function PastureProvider({ children }: { children: ReactNode }) {
       const observationsData: PastureObservation[] = await observationsRes.json();
       const restPeriodsData: PastureRestPeriod[] = await restPeriodsRes.json();
       let propertyMapData: PropertyMap | null = await propertyMapRes.json();
+      const gatesData: Gate[] = gatesRes.ok ? await gatesRes.json() : [];
 
       // Auto-initialize farm location if not set
       if (!propertyMapData?.map_center) {
@@ -148,6 +157,7 @@ export function PastureProvider({ children }: { children: ReactNode }) {
       setObservations(observationsData);
       setRestPeriods(restPeriodsData);
       setPropertyMap(propertyMapData);
+      setGates(gatesData || []);
     } catch (err) {
       console.error('Error fetching pasture data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch pasture data');
@@ -407,6 +417,34 @@ export function PastureProvider({ children }: { children: ReactNode }) {
   };
 
   // Save property map center location
+  // Gates CRUD
+  const addGate = async (gate: Omit<Gate, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const res = await fetch('/api/gates', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(gate)
+      });
+      if (!res.ok) throw new Error('Failed to create gate');
+      await fetchData();
+    } catch (err) { console.error('Error adding gate:', err); throw err; }
+  };
+
+  const updateGate = async (id: number, updates: Partial<Gate>) => {
+    try {
+      const res = await fetch(`/api/gates/${id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(updates)
+      });
+      if (!res.ok) throw new Error('Failed to update gate');
+      await fetchData();
+    } catch (err) { console.error('Error updating gate:', err); throw err; }
+  };
+
+  const deleteGate = async (id: number) => {
+    try {
+      const res = await fetch(`/api/gates/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete gate');
+      await fetchData();
+    } catch (err) { console.error('Error deleting gate:', err); throw err; }
+  };
   const savePropertyLocation = async (center: [number, number], zoom: number) => {
     try {
       const res = await fetch('/api/property-map', {
@@ -444,6 +482,7 @@ export function PastureProvider({ children }: { children: ReactNode }) {
       observations,
       restPeriods,
       propertyMap,
+      gates,
       loading,
       error,
       addPasture,
@@ -457,6 +496,9 @@ export function PastureProvider({ children }: { children: ReactNode }) {
       endRestPeriod,
       savePropertyBoundary,
       savePropertyLocation,
+      addGate,
+      updateGate,
+      deleteGate,
       refreshData: fetchData,
       getPastureById,
       getCurrentRotations,
