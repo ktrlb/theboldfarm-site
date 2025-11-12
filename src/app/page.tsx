@@ -98,13 +98,8 @@ async function FeatureCard({
     image = await getRandomImageFromAlbum(albumName);
   }
   
-  // If still no image, try to get any image as fallback
-  if (!image) {
-    const allImages = await getImagesFromAlbums([]); // Empty array means "any album"
-    if (allImages.length > 0) {
-      image = allImages[Math.floor(Math.random() * allImages.length)];
-    }
-  }
+  // No fallback to "any album" - only use assigned images or specific albums
+  // This prevents the same image from appearing everywhere
   
   return (
     <Card className="text-center hover:shadow-lg transition-shadow overflow-hidden">

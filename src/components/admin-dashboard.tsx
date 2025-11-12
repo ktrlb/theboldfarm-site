@@ -259,18 +259,27 @@ function ImageManagementSection() {
 
   const handleCreateAlbum = async (name: string, description?: string) => {
     try {
+      if (!name.trim()) {
+        alert('Please enter an album name');
+        return;
+      }
+
       const res = await fetch('/api/albums', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description, images: [] }),
+        body: JSON.stringify({ name: name.trim(), description: description?.trim() || null, images: [] }),
       });
+      
       if (res.ok) {
         await fetchAlbums();
         setShowAddAlbum(false);
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to create album');
       }
     } catch (error) {
       console.error('Error creating album:', error);
-      alert('Failed to create album');
+      alert(error instanceof Error ? error.message : 'Failed to create album');
     }
   };
 
@@ -282,15 +291,84 @@ function ImageManagementSection() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          images: [...selectedAlbum.images, ...newImages]
+          images: [...(selectedAlbum.images || []), ...newImages]
         }),
       });
       if (res.ok) {
         await fetchAlbums();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to add images');
       }
     } catch (error) {
       console.error('Error adding images:', error);
-      alert('Failed to add images to album');
+      alert(error instanceof Error ? error.message : 'Failed to add images to album');
+    }
+  };
+
+  const handleDeleteImage = async (imageUrl: string) => {
+    if (!selectedAlbum) return;
+    
+    if (!confirm('Are you sure you want to delete this image? This will remove it from the album and delete it from storage.')) {
+      return;
+    }
+
+    console.log('Deleting image:', imageUrl);
+    console.log('Current album images:', selectedAlbum.images);
+
+    try {
+      // Delete from blob storage
+      try {
+        const deleteRes = await fetch(`/api/upload-photo?url=${encodeURIComponent(imageUrl)}`, {
+          method: 'DELETE',
+        });
+        if (!deleteRes.ok) {
+          console.warn('Failed to delete from blob storage, but continuing with album update');
+        }
+      } catch (error) {
+        console.error('Error deleting from blob:', error);
+        // Continue even if blob deletion fails
+      }
+
+      // Fetch fresh album data to ensure we have the latest state
+      const albumRes = await fetch(`/api/albums/${selectedAlbum.id}`);
+      if (!albumRes.ok) {
+        throw new Error('Failed to fetch album data');
+      }
+      const freshAlbum = await albumRes.json();
+
+      // Remove from album using exact URL match
+      // Normalize URLs for comparison (remove trailing slashes, decode)
+      const normalizeUrl = (url: string) => decodeURIComponent(url.trim());
+      const targetUrl = normalizeUrl(imageUrl);
+      
+      const updatedImages = (freshAlbum.images || []).filter((url: string) => {
+        const normalized = normalizeUrl(url);
+        const matches = normalized === targetUrl;
+        console.log(`Comparing: "${normalized}" === "${targetUrl}" = ${matches}`);
+        return !matches;
+      });
+
+      console.log('Updated images after filter:', updatedImages);
+      console.log('Removed count:', (freshAlbum.images || []).length - updatedImages.length);
+
+      const res = await fetch(`/api/albums/${selectedAlbum.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          images: updatedImages
+        }),
+      });
+      
+      if (res.ok) {
+        await fetchAlbums();
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to remove image from album');
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete image');
     }
   };
 
@@ -381,16 +459,35 @@ function ImageManagementSection() {
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {selectedAlbum.images.map((url: string, index: number) => (
-                <div key={index} className="relative group">
-                  <img src={url} alt={`Image ${index + 1}`} className="w-full h-32 object-cover rounded-lg border border-gray-200" />
+                <div key={`${url}-${index}`} className="relative group">
+                  <img 
+                    src={url} 
+                    alt={`Image ${index + 1}`} 
+                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                    onError={(e) => {
+                      console.error('Failed to load image:', url);
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors rounded-lg" />
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="bg-white"
+                      className="bg-white hover:bg-gray-50"
                       onClick={() => handleCopyUrl(url)}
+                      title="Copy image URL"
                     >
-                      {copiedUrl === url ? 'Copied!' : 'Copy URL'}
+                      {copiedUrl === url ? '✓' : '📋'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="bg-red-50 hover:bg-red-100 text-red-600 border-red-300"
+                      onClick={() => handleDeleteImage(url)}
+                      title="Delete image"
+                    >
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 </div>
@@ -416,12 +513,18 @@ function ImageManagementSection() {
       )}
 
       {/* Create Album Dialog */}
-      {showAddAlbum && (
-        <CreateAlbumDialog
-          onSubmit={(name, description) => handleCreateAlbum(name, description)}
-          onClose={() => setShowAddAlbum(false)}
-        />
-      )}
+      <Dialog open={showAddAlbum} onOpenChange={setShowAddAlbum}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create New Album</DialogTitle>
+            <DialogDescription>Create an album to organize your images</DialogDescription>
+          </DialogHeader>
+          <CreateAlbumDialog
+            onSubmit={(name, description) => handleCreateAlbum(name, description)}
+            onClose={() => setShowAddAlbum(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -431,45 +534,65 @@ function CreateAlbumDialog({ onSubmit, onClose }: {
   onClose: () => void;
 }) {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      onSubmit(name.trim());
+    if (!name.trim()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      await onSubmit(name.trim(), description.trim() || undefined);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Create New Album</CardTitle>
-          <CardDescription>Create an album to organize your images</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="album-name">Album Name</Label>
-              <Input
-                id="album-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., General Site Images"
-                required
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button type="submit" className="flex-1">
-                Create Album
-              </Button>
-              <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="album-name">Album Name *</Label>
+        <Input
+          id="album-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g., General Site Images"
+          required
+          disabled={isSubmitting}
+        />
+      </div>
+      <div>
+        <Label htmlFor="album-description">Description (Optional)</Label>
+        <Input
+          id="album-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Brief description of this album"
+          disabled={isSubmitting}
+        />
+      </div>
+      <div className="flex gap-2">
+        <Button 
+          type="submit" 
+          className="flex-1 bg-gradient-growth hover:opacity-90"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Creating...' : 'Create Album'}
+        </Button>
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={onClose} 
+          className="flex-1"
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
+      </div>
+    </form>
   );
 }
 

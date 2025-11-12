@@ -56,6 +56,19 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
+    // Validate that name is provided if being updated
+    if (body.name !== undefined && !body.name?.trim()) {
+      return NextResponse.json(
+        { error: 'Name cannot be empty' },
+        { status: 400 }
+      );
+    }
+
+    // Convert price to string if it's a number
+    if (body.price !== undefined && typeof body.price === 'number') {
+      body.price = String(body.price);
+    }
+
     const [updatedAnimal] = await db
       .update(animals)
       .set({ ...body, updated_at: new Date() })

@@ -6,10 +6,18 @@ import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// Context to track if dialog is modal
+const DialogContext = React.createContext<{ modal?: boolean }>({});
+
 function Dialog({
+  modal = true,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+  return (
+    <DialogContext.Provider value={{ modal }}>
+      <DialogPrimitive.Root data-slot="dialog" modal={modal} {...props} />
+    </DialogContext.Provider>
+  )
 }
 
 function DialogTrigger({
@@ -54,6 +62,9 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  const dialogContext = React.useContext(DialogContext);
+  const isModal = dialogContext?.modal !== false;
+  
   React.useEffect(() => {
     if (typeof document !== 'undefined') {
       document.body.classList.add('dialog-open');
@@ -62,15 +73,36 @@ function DialogContent({
       };
     }
   }, []);
+  
   return (
     <DialogPortal data-slot="dialog-portal">
-      <DialogOverlay />
+      {isModal && <DialogOverlay />}
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
           "bg-white data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[5vh] left-[50%] z-[10001] flex flex-col w-full max-w-[calc(100%-2rem)] max-h-[90vh] translate-x-[-50%] rounded-xl border-2 border-gray-200 shadow-2xl duration-200 sm:max-w-lg overflow-hidden",
           className
         )}
+        onInteractOutside={(e) => {
+          // Only prevent closing if modal and not interacting with select
+          if (isModal) {
+            const target = e.target as HTMLElement;
+            if (target.closest('[data-slot="select-content"]') || 
+                target.closest('[data-slot="select-trigger"]') ||
+                target.closest('[data-radix-select-trigger]') ||
+                target.closest('[data-radix-select-content]') ||
+                target.closest('[data-radix-select-viewport]')) {
+              e.preventDefault();
+            }
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          // Don't close dialog if select is open
+          const selectContent = document.querySelector('[data-slot="select-content"][data-state="open"]');
+          if (selectContent) {
+            e.preventDefault();
+          }
+        }}
         {...props}
       >
         {children}

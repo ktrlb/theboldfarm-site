@@ -35,13 +35,34 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const [newAlbum] = await db.insert(imageAlbums).values(body).returning();
+    
+    // Validate required fields
+    if (!body.name || !body.name.trim()) {
+      return NextResponse.json(
+        { error: 'Album name is required' },
+        { status: 400 }
+      );
+    }
+
+    // Set defaults
+    if (!body.images) {
+      body.images = [];
+    }
+    if (!body.description) {
+      body.description = null;
+    }
+
+    const [newAlbum] = await db.insert(imageAlbums).values({
+      name: body.name.trim(),
+      description: body.description?.trim() || null,
+      images: body.images || [],
+    }).returning();
     
     return NextResponse.json(newAlbum);
   } catch (error) {
     console.error('Error creating album:', error);
     return NextResponse.json(
-      { error: 'Failed to create album' },
+      { error: 'Failed to create album', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

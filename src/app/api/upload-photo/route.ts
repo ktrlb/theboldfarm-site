@@ -162,14 +162,25 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const { del } = await import('@vercel/blob');
-    await del(url);
+    try {
+      const { del } = await import('@vercel/blob');
+      await del(url);
+      console.log(`Successfully deleted blob: ${url}`);
+    } catch (blobError) {
+      console.error('Error deleting from Blob:', blobError);
+      // If it's a 404 or similar, the blob might already be deleted, which is fine
+      if (blobError instanceof Error && blobError.message.includes('404')) {
+        console.log('Blob already deleted or not found, continuing...');
+      } else {
+        throw blobError;
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting from Blob:', error);
     return NextResponse.json(
-      { error: 'Failed to delete file' },
+      { error: 'Failed to delete file', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

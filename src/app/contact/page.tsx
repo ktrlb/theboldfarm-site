@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,8 @@ import { Mail, MapPin, Clock } from "lucide-react";
 import { ContactHero } from "@/components/contact-hero";
 import { toast } from "sonner";
 
-export default function ContactPage() {
+function ContactForm() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,6 +23,14 @@ export default function ContactPage() {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Pre-populate form from URL query params
+  useEffect(() => {
+    const why = searchParams.get('why');
+    if (why) {
+      setFormData(prev => ({ ...prev, why: decodeURIComponent(why) }));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,6 +109,7 @@ export default function ContactPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Goat Information/Sales">Goat Information/Sales</SelectItem>
+                      <SelectItem value="Beef Information/Sales">Beef Information/Sales</SelectItem>
                       <SelectItem value="Cow Information/Sales">Cow Information/Sales</SelectItem>
                       <SelectItem value="Product Inquiries">Product Inquiries</SelectItem>
                       <SelectItem value="Farm Visit">Farm Visit</SelectItem>
@@ -273,5 +284,20 @@ export default function ContactPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-fresh-sprout-green"></div>
+        </div>
+      </div>
+    }>
+      <ContactForm />
+    </Suspense>
   );
 }

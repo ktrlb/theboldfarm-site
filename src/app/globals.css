@@ -15,6 +15,29 @@
 /* Ensure dialog portal container is above everything */
 [data-radix-portal] { z-index: 99999 !important; }
 
+/* Ensure select dropdowns render above dialogs - use very high z-index */
+[data-slot="select-content"],
+[data-radix-select-content] {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+  position: fixed !important;
+}
+
+/* Ensure select triggers are clickable and focusable */
+[data-slot="select-trigger"],
+[data-radix-select-trigger] {
+  pointer-events: auto !important;
+  z-index: auto !important;
+  position: relative !important;
+}
+
+/* Ensure select triggers can receive focus */
+[data-slot="select-trigger"]:focus,
+[data-radix-select-trigger]:focus {
+  outline: 2px solid #E8C547;
+  outline-offset: 2px;
+}
+
 /* As a last resort, hide the map root while dialogs are open */
 .dialog-open .map-root { display: none !important; }
 

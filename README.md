@@ -29,7 +29,7 @@ A modern, responsive website for The Bold Farm homestead, built with Next.js, Ty
 - **Styling**: Tailwind CSS
 - **Components**: Shadcn UI
 - **Icons**: Lucide React
-- **Database**: Supabase (ready for integration)
+- **Database**: Neon
 - **Payments**: Stripe (ready for integration)
 
 ## Getting Started
@@ -118,10 +118,7 @@ The color scheme is defined in `src/app/globals.css`. The current theme uses war
 
 ## Future Enhancements
 
-- **Image Management**: Add photo uploads for animals and products
-- **Database Integration**: Connect to Supabase for persistent data storage
 - **Payment Processing**: Integrate Stripe for deposits and product purchases
-- **Email Integration**: Connect contact forms to email services
 - **Blog/News**: Add a blog section for farm updates
 - **Workshop Registration**: Online booking for future workshops
 - **Inventory Tracking**: Advanced inventory management system
@@ -134,13 +131,7 @@ The color scheme is defined in `src/app/globals.css`. The current theme uses war
 2. Connect your repository to Vercel
 3. Deploy automatically on every push
 
-### Other Platforms
 
-The site can be deployed to any platform that supports Next.js:
-- Netlify
-- Railway
-- DigitalOcean App Platform
-- AWS Amplify
 
 ## File Structure
 

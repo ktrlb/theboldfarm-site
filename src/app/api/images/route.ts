@@ -4,10 +4,11 @@ import { getImagesFromAlbums } from '@/lib/images';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const albumNamesParam = searchParams.get('albums');
-    const albumNames = albumNamesParam ? albumNamesParam.split(',').map(s => s.trim()) : [];
+    // Support both 'albums' and 'albumNames' parameters for backwards compatibility
+    const albumNamesParam = searchParams.get('albums') || searchParams.get('albumNames');
+    const albumNames = albumNamesParam ? albumNamesParam.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
     
-    console.log(`[API /images] Requested albums: ${albumNames.join(', ')}`);
+    console.log(`[API /images] Requested albums: ${albumNames.join(', ') || '(none - will return empty)'}`);
     
     const images = await getImagesFromAlbums(albumNames);
     

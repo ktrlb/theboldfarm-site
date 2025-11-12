@@ -11,6 +11,7 @@ const navigation = [
   { name: "About", href: "/about" },
   { name: "Our Animals", href: "/animals" },
   { name: "Goats for Sale", href: "/goats" },
+  { name: "Farm Raised Beef", href: "/beef" },
   { name: "Shop", href: "/shop" },
   { name: "Contact", href: "/contact" },
 ];

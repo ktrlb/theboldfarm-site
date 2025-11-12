@@ -51,15 +51,40 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     
-    // Set defaults if not provided
-    if (!body.animal_type) {
-      body.animal_type = 'Goat'; // Default for backwards compatibility
+    // Validate required fields
+    if (!body.name || !body.animal_type) {
+      return NextResponse.json(
+        { error: 'Name and animal_type are required fields' },
+        { status: 400 }
+      );
     }
+    
+    // Set type default if not provided or empty
+    if (!body.type || body.type.trim() === '') {
+      body.type = body.animal_type; // Default to animal_type if no subtype provided
+    }
+    
+    // Set defaults if not provided
     if (!body.status) {
       body.status = 'Active';
     }
     if (!body.bio) {
       body.bio = '';
+    }
+    if (!body.birth_type) {
+      body.birth_type = 'exact';
+    }
+    if (body.price === undefined || body.price === null) {
+      body.price = '0';
+    }
+    if (body.is_for_sale === undefined) {
+      body.is_for_sale = false;
+    }
+    if (body.registered === undefined) {
+      body.registered = false;
+    }
+    if (!body.photos) {
+      body.photos = [];
     }
     
     const [newAnimal] = await db.insert(animals).values(body).returning();

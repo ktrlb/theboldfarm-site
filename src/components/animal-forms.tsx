@@ -13,6 +13,7 @@ import { Animal, AnimalHealthRecord } from "@/lib/db/schema";
 import { ANIMAL_TYPES, getSubtypesForAnimalType } from "@/lib/animal-types";
 import { PhotoUpload } from "./photo-upload";
 import { useAnimals } from "@/lib/animal-context";
+import { toast } from "sonner";
 
 interface AddAnimalFormProps {
   defaultAnimalType?: string;
@@ -50,33 +51,45 @@ export function AddAnimalForm({ defaultAnimalType = 'Goat', onSubmit, onClose }:
     }
   }, [animalType]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      toast.error('Please enter an animal name');
+      return;
+    }
     
     // Validate subtype if subtypes exist
     if (subtypes.length > 0 && !formData.type) {
-      return; // Don't submit if subtype is required but not selected
+      toast.error('Please select a subtype');
+      return;
     }
     
     const animalData: Omit<Animal, 'id' | 'created_at' | 'updated_at'> = {
-      name: formData.name,
+      name: formData.name.trim(),
       animal_type: animalType,
-      type: subtypes.length > 0 ? formData.type : "", // Use empty string if no subtypes
+      type: subtypes.length > 0 ? formData.type : animalType, // Use animal_type as default if no subtypes
       birth_date: formData.birth_date || null,
       birth_type: formData.birth_type,
       price: String(formData.price),
       is_for_sale: formData.is_for_sale,
       registered: formData.registered,
       horn_status: animalType === 'Goat' ? (formData.horn_status || 'Horned') : null,
-      dam: formData.dam || null,
-      sire: formData.sire || null,
-      bio: formData.bio,
+      dam: formData.dam?.trim() || null,
+      sire: formData.sire?.trim() || null,
+      bio: formData.bio.trim(),
       status: formData.status,
       photos: formData.photos,
       custom_fields: Object.keys(formData.custom_fields).length > 0 ? formData.custom_fields : null,
     };
 
-    onSubmit(animalData);
+    try {
+      await onSubmit(animalData);
+      toast.success('Animal added successfully!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to add animal');
+    }
   };
 
   return (
@@ -84,10 +97,13 @@ export function AddAnimalForm({ defaultAnimalType = 'Goat', onSubmit, onClose }:
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="animal_type">Animal Type *</Label>
-          <Select value={animalType} onValueChange={(value) => {
-            setAnimalType(value);
-            setFormData({ ...formData, animal_type: value, type: "" });
-          }}>
+          <Select 
+            value={animalType} 
+            onValueChange={(value) => {
+              setAnimalType(value);
+              setFormData({ ...formData, animal_type: value, type: "" });
+            }}
+          >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -371,32 +387,50 @@ export function EditAnimalForm({
   const animalTypeDef = ANIMAL_TYPES[animal.animal_type];
   const subtypes = getSubtypesForAnimalType(animal.animal_type);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      name: formData.name,
-      animal_type: formData.animal_type,
-      type: formData.type,
-      birth_date: formData.birth_date || null,
-      birth_type: formData.birth_type,
-      price: String(formData.price),
-      is_for_sale: formData.is_for_sale,
-      registered: formData.registered,
-      horn_status: formData.animal_type === 'Goat' ? (formData.horn_status || null) : null,
-      dam: formData.dam || null,
-      sire: formData.sire || null,
-      bio: formData.bio,
-      status: formData.status,
-      photos: formData.photos,
-      custom_fields: Object.keys(formData.custom_fields).length > 0 ? formData.custom_fields : null,
-    });
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      toast.error('Please enter an animal name');
+      return;
+    }
+    
+    // Validate subtype if subtypes exist
+    if (subtypes.length > 0 && !formData.type) {
+      toast.error('Please select a subtype');
+      return;
+    }
+    
+    try {
+      await onSubmit({
+        name: formData.name.trim(),
+        animal_type: formData.animal_type,
+        type: subtypes.length > 0 ? formData.type : formData.animal_type, // Use animal_type as default if no subtypes
+        birth_date: formData.birth_date || null,
+        birth_type: formData.birth_type,
+        price: String(formData.price),
+        is_for_sale: formData.is_for_sale,
+        registered: formData.registered,
+        horn_status: formData.animal_type === 'Goat' ? (formData.horn_status || null) : null,
+        dam: formData.dam?.trim() || null,
+        sire: formData.sire?.trim() || null,
+        bio: formData.bio.trim(),
+        status: formData.status,
+        photos: formData.photos,
+        custom_fields: Object.keys(formData.custom_fields).length > 0 ? formData.custom_fields : null,
+      });
+      toast.success('Animal updated successfully!');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to update animal');
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Similar form fields as AddAnimalForm but with existing values */}
-      <div>
-        <Label htmlFor="name">Name *</Label>
+        <div>
+          <Label htmlFor="name">Name *</Label>
         <Input
           id="name"
           value={formData.name}
@@ -405,21 +439,27 @@ export function EditAnimalForm({
         />
       </div>
 
-      <div>
-        <Label htmlFor="type">Subtype *</Label>
-        <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {subtypes.map((subtype) => (
-              <SelectItem key={subtype} value={subtype}>
-                {subtype}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        {subtypes.length > 0 && (
+          <div>
+            <Label htmlFor="type">Subtype *</Label>
+            <Select 
+              value={formData.type} 
+              onValueChange={(value) => setFormData({ ...formData, type: value })}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select subtype" />
+              </SelectTrigger>
+              <SelectContent>
+                {subtypes.map((subtype) => (
+                  <SelectItem key={subtype} value={subtype}>
+                    {subtype}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -612,17 +652,17 @@ export function EditAnimalForm({
         />
       </div>
 
-      <div className="flex gap-2">
-        <Button type="submit" className="flex-1 bg-gradient-growth hover:opacity-90">
-          <Save className="h-4 w-4 mr-2" />
-          Update Animal
-        </Button>
-        <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
-          <X className="h-4 w-4 mr-2" />
-          Cancel
-        </Button>
-      </div>
-    </form>
+        <div className="flex gap-2">
+          <Button type="submit" className="flex-1 bg-gradient-growth hover:opacity-90">
+            <Save className="h-4 w-4 mr-2" />
+            Update Animal
+          </Button>
+          <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
+            <X className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+        </div>
+      </form>
   );
 }
 

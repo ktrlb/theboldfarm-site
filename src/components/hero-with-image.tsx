@@ -43,20 +43,20 @@ export function HeroWithImage({
 
     async function fetchImage() {
       try {
+        // If no album names provided, skip album fetching
+        // Assigned images should be passed via defaultImage prop
         if (albumNames.length === 0) {
           setLoading(false);
           return;
         }
-        const params = new URLSearchParams({ albums: albumNames.join(',') });
-        console.log(`[HeroWithImage] Fetching images from albums: ${albumNames.join(', ')}`);
-        const res = await fetch(`/api/images?${params}`);
+        // Only fetch from albums if no defaultImage was provided
+        // This is a fallback for components that haven't migrated to image placements yet
+        const params = new URLSearchParams();
+        albumNames.forEach(name => params.append('albumNames', name));
+        const res = await fetch(`/api/images?${params.toString()}`);
         const data = await res.json();
-        console.log(`[HeroWithImage] Received ${data.images?.length || 0} images`);
         if (data.images && data.images.length > 0) {
-          console.log(`[HeroWithImage] Setting hero image: ${data.images[0]}`);
           setHeroImage(data.images[0]);
-        } else {
-          console.log('[HeroWithImage] No images found, will use fallback');
         }
       } catch (error) {
         console.error('[HeroWithImage] Error fetching hero image:', error);

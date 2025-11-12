@@ -58,8 +58,8 @@ export const PAGE_SECTIONS: PageSection[] = [
     section: 'Hero',
   },
   {
-    id: 'about-story',
-    name: 'About - Story Section',
+    id: 'about-story-image',
+    name: 'About - Story Section Image',
     description: 'Image for the "Our Story" section on the About page.',
     page: 'About',
     section: 'Story',

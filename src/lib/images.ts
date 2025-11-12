@@ -87,16 +87,14 @@ export async function getImagesFromAlbums(albumNames: string[]): Promise<string[
     const allImages: string[] = [];
     const lowerAlbumNames = albumNames.map(n => n.toLowerCase().trim()).filter(n => n.length > 0);
     
-    // If no specific album names provided, use ANY album with images
+    // If no specific album names provided, return empty array (don't use any album)
+    // This prevents the same image from appearing everywhere
     if (lowerAlbumNames.length === 0) {
-      console.log('[getImagesFromAlbums] No album names provided, using any album with images');
-      for (const album of allAlbums) {
-        if (album.images && album.images.length > 0) {
-          console.log(`[getImagesFromAlbums] Using album "${album.name}" with ${album.images.length} images`);
-          allImages.push(...album.images);
-        }
-      }
-    } else {
+      console.log('[getImagesFromAlbums] No album names provided, returning empty array');
+      return [];
+    }
+    
+    {
       // Try to find albums by flexible matching (exact or contains)
       const matchedAlbums = new Set<number>(); // Track which albums we've already added
       
@@ -126,16 +124,10 @@ export async function getImagesFromAlbums(albumNames: string[]): Promise<string[
         }
       }
       
-      // If no matches found, use ANY album with images as fallback
+      // If no matches found, return empty array (don't use any album as fallback)
+      // This prevents the same image from appearing everywhere
       if (allImages.length === 0) {
-        console.log('[getImagesFromAlbums] No matches found, using any album with images as fallback');
-        for (const album of allAlbums) {
-          if (album.images && album.images.length > 0 && !matchedAlbums.has(album.id)) {
-            console.log(`[getImagesFromAlbums] Using album "${album.name}" with ${album.images.length} images as fallback`);
-            allImages.push(...album.images);
-            matchedAlbums.add(album.id);
-          }
-        }
+        console.log('[getImagesFromAlbums] No matches found for albums:', albumNames.join(', '), '- returning empty array');
       }
     }
     

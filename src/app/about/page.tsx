@@ -4,11 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Heart, Leaf, Users, Target } from "lucide-react";
 import Image from "next/image";
 import { getImagesFromAlbums } from "@/lib/images";
+import { getImageForSection } from "@/lib/image-placements";
 import { FarmLogo } from "@/components/farm-logo";
 
 async function AboutHero() {
-  const heroImages = await getImagesFromAlbums(['farm', 'about', 'general', 'site']);
-  const heroImage = heroImages.length > 0 ? heroImages[0] : null;
+  // First try to get assigned image, then fall back to album images only if no assignment
+  let heroImage: string | null = await getImageForSection('about-hero');
+  if (!heroImage) {
+    const heroImages = await getImagesFromAlbums(['farm', 'about', 'general', 'site']);
+    heroImage = heroImages.length > 0 ? heroImages[0] : null;
+  }
 
   return (
     <section className="relative py-20 overflow-hidden">
@@ -215,32 +220,26 @@ export default async function AboutPage() {
 }
 
 async function AboutStoryImage() {
-  const storyImages = await getImagesFromAlbums(['farm', 'animals', 'goats', 'Farm', 'Animals', 'Goats']);
-  const storyImage = storyImages.length > 0 ? storyImages[0] : null;
+  // First try to get assigned image, then fall back to album images only if no assignment
+  let storyImage: string | null = await getImageForSection('about-story-image');
+  if (!storyImage) {
+    const storyImages = await getImagesFromAlbums(['farm', 'animals', 'goats', 'Farm', 'Animals', 'Goats']);
+    storyImage = storyImages.length > 0 ? storyImages[0] : null;
+  }
 
   return (
     <div className="relative h-full min-h-[300px] rounded-lg overflow-hidden">
       {storyImage ? (
-        <>
-          <Image
-            src={storyImage}
-            alt="The Bold Farm"
-            fill
-            className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-          />
-          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-            <p className="text-lg text-white font-medium px-8 text-center drop-shadow-lg">
-              "Building a sustainable future, one animal at a time."
-            </p>
-          </div>
-        </>
+        <Image
+          src={storyImage}
+          alt="The Bold Farm"
+          fill
+          className="object-cover"
+          sizes="(max-width: 1024px) 100vw, 50vw"
+        />
       ) : (
         <div className="bg-gradient-growth rounded-lg p-8 text-center h-full flex flex-col items-center justify-center">
           <div className="text-6xl mb-4">🐐</div>
-          <p className="text-lg text-gray-700 font-medium">
-            "Building a sustainable future, one animal at a time."
-          </p>
         </div>
       )}
     </div>

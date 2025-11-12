@@ -30,19 +30,20 @@ export function AnimalManagementSection() {
           <h2 className="text-2xl font-bold text-gray-900">Animal Management</h2>
           <p className="text-gray-600 mt-1">Manage all your farm animals - goats, cows, horses, and more</p>
         </div>
-        <Dialog open={showAddAnimal} onOpenChange={setShowAddAnimal}>
+        <Dialog open={showAddAnimal} onOpenChange={setShowAddAnimal} modal={false}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-growth hover:opacity-90">
               <Plus className="h-4 w-4 mr-2" />
               Add New Animal
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-6">
             <DialogHeader>
               <DialogTitle>Add New Animal</DialogTitle>
               <DialogDescription>Add a new animal to your farm</DialogDescription>
             </DialogHeader>
-            <AddAnimalForm 
+            <div className="pt-4">
+              <AddAnimalForm 
               defaultAnimalType={selectedAnimalType}
               onSubmit={async (animal) => {
                 await addAnimal(animal);
@@ -51,6 +52,7 @@ export function AnimalManagementSection() {
               }} 
               onClose={() => setShowAddAnimal(false)} 
             />
+            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -106,7 +108,7 @@ export function AnimalManagementSection() {
 
       {/* Health Records Dialog */}
       {selectedAnimal && showHealthRecords && (
-        <Dialog open={showHealthRecords} onOpenChange={setShowHealthRecords}>
+        <Dialog open={showHealthRecords} onOpenChange={setShowHealthRecords} modal={false}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Health Records - {selectedAnimal.name}</DialogTitle>
@@ -119,7 +121,7 @@ export function AnimalManagementSection() {
 
       {/* Grazing History Dialog */}
       {selectedAnimal && showGrazingHistory && (
-        <Dialog open={showGrazingHistory} onOpenChange={setShowGrazingHistory}>
+        <Dialog open={showGrazingHistory} onOpenChange={setShowGrazingHistory} modal={false}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Grazing History - {selectedAnimal.name}</DialogTitle>
@@ -132,13 +134,14 @@ export function AnimalManagementSection() {
 
       {/* Edit Animal Dialog */}
       {selectedAnimal && !showHealthRecords && !showGrazingHistory && (
-        <Dialog open={!!selectedAnimal} onOpenChange={(open) => !open && setSelectedAnimal(null)}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <Dialog open={!!selectedAnimal} onOpenChange={(open) => !open && setSelectedAnimal(null)} modal={false}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-6">
             <DialogHeader>
               <DialogTitle>Edit Animal</DialogTitle>
               <DialogDescription>Update animal information</DialogDescription>
             </DialogHeader>
-            <EditAnimalForm 
+            <div className="pt-4">
+              <EditAnimalForm 
               animal={selectedAnimal} 
               onSubmit={async (updates) => {
                 await updateAnimal(selectedAnimal.id, updates);
@@ -147,6 +150,7 @@ export function AnimalManagementSection() {
               }} 
               onClose={() => setSelectedAnimal(null)} 
             />
+            </div>
           </DialogContent>
         </Dialog>
       )}
