@@ -7,11 +7,15 @@ export async function GET(
 ) {
   try {
     const { section } = await params;
+    console.log(`[API /image-placements/${section}] Fetching image for section: ${section}`);
+    
     const imageUrl = await getImageForSection(section);
     
-    return NextResponse.json({ imageUrl });
+    console.log(`[API /image-placements/${section}] Found image: ${imageUrl ? 'yes' : 'no'}`);
+    
+    return NextResponse.json({ imageUrl: imageUrl || null });
   } catch (error) {
-    console.error('Error fetching image placement:', error);
+    console.error(`[API /image-placements/${section}] Error:`, error);
     return NextResponse.json(
       { error: 'Failed to fetch image placement', imageUrl: null },
       { status: 500 }

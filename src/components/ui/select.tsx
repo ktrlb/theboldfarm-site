@@ -40,6 +40,10 @@ function SelectTrigger({
         "border-gray-300 bg-white data-[placeholder]:text-gray-500 [&_svg:not([class*='text-'])]:text-gray-500 focus-visible:border-honey-gold focus-visible:ring-honey-gold/20 aria-invalid:ring-red-500/20 aria-invalid:border-red-500 hover:bg-gray-50 flex w-fit items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm whitespace-nowrap shadow-sm transition-all outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className
       )}
+      onPointerDown={(e) => {
+        // Ensure pointer events work even inside dialogs
+        e.stopPropagation();
+      }}
       {...props}
     >
       {children}

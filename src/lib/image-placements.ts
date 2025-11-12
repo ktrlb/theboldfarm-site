@@ -14,9 +14,12 @@ export async function getImageForSection(pageSection: string): Promise<string | 
   try {
     const db = getDbInstance();
     if (!db) {
+      console.log(`[getImageForSection] Database not available for section: ${pageSection}`);
       return null;
     }
 
+    console.log(`[getImageForSection] Querying database for section: ${pageSection}`);
+    
     const placements = await db
       .select()
       .from(imagePlacements)
@@ -24,9 +27,12 @@ export async function getImageForSection(pageSection: string): Promise<string | 
       .orderBy(desc(imagePlacements.priority))
       .limit(1);
 
-    return placements.length > 0 ? placements[0].image_url : null;
+    const result = placements.length > 0 ? placements[0].image_url : null;
+    console.log(`[getImageForSection] Found ${placements.length} placement(s) for ${pageSection}, returning: ${result ? 'image URL' : 'null'}`);
+    
+    return result;
   } catch (error) {
-    console.error(`Error fetching image for section ${pageSection}:`, error);
+    console.error(`[getImageForSection] Error fetching image for section ${pageSection}:`, error);
     return null;
   }
 }

@@ -83,10 +83,30 @@ function DialogContent({
           "bg-white data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[5vh] left-[50%] z-[10001] flex flex-col w-full max-w-[calc(100%-2rem)] max-h-[90vh] translate-x-[-50%] rounded-xl border-2 border-gray-200 shadow-2xl duration-200 sm:max-w-lg overflow-hidden",
           className
         )}
+        onOpenAutoFocus={(e) => {
+          // When non-modal, don't trap focus - allow Select triggers to work
+          if (!isModal) {
+            e.preventDefault();
+          }
+        }}
         onInteractOutside={(e) => {
           // Only prevent closing if modal and not interacting with select
           if (isModal) {
             const target = e.target as HTMLElement;
+            if (target.closest('[data-slot="select-content"]') || 
+                target.closest('[data-slot="select-trigger"]') ||
+                target.closest('[data-radix-select-trigger]') ||
+                target.closest('[data-radix-select-content]') ||
+                target.closest('[data-radix-select-viewport]')) {
+              e.preventDefault();
+            }
+          }
+        }}
+        onPointerDownOutside={(e) => {
+          // When non-modal, allow clicks outside to reach Select components
+          if (!isModal) {
+            const target = e.target as HTMLElement;
+            // Don't prevent if clicking on Select components
             if (target.closest('[data-slot="select-content"]') || 
                 target.closest('[data-slot="select-trigger"]') ||
                 target.closest('[data-radix-select-trigger]') ||

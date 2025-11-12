@@ -29,6 +29,14 @@
   pointer-events: auto !important;
   z-index: auto !important;
   position: relative !important;
+  /* Ensure triggers can receive clicks even when inside dialogs */
+  isolation: isolate;
+}
+
+/* Ensure select viewport is interactive */
+[data-slot="select-viewport"],
+[data-radix-select-viewport] {
+  pointer-events: auto !important;
 }
 
 /* Ensure select triggers can receive focus */
