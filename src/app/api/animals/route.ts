@@ -86,6 +86,10 @@ export async function POST(request: Request) {
     if (!body.photos) {
       body.photos = [];
     }
+    // Ensure custom_fields is always an object (not null)
+    if (!body.custom_fields || typeof body.custom_fields !== 'object' || Array.isArray(body.custom_fields)) {
+      body.custom_fields = {};
+    }
     
     const [newAnimal] = await db.insert(animals).values(body).returning();
     

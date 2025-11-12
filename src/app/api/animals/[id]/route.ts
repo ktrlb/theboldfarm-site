@@ -69,6 +69,13 @@ export async function PUT(
       body.price = String(body.price);
     }
 
+    // Ensure custom_fields is always an object (not null) if being updated
+    if (body.custom_fields !== undefined) {
+      if (!body.custom_fields || typeof body.custom_fields !== 'object' || Array.isArray(body.custom_fields)) {
+        body.custom_fields = {};
+      }
+    }
+
     const [updatedAnimal] = await db
       .update(animals)
       .set({ ...body, updated_at: new Date() })

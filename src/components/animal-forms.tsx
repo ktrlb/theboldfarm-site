@@ -81,7 +81,7 @@ export function AddAnimalForm({ defaultAnimalType = 'Goat', onSubmit, onClose }:
       bio: formData.bio.trim(),
       status: formData.status,
       photos: formData.photos,
-      custom_fields: Object.keys(formData.custom_fields).length > 0 ? formData.custom_fields : null,
+      custom_fields: Object.keys(formData.custom_fields).length > 0 ? formData.custom_fields : {},
     };
 
     try {
@@ -418,7 +418,7 @@ export function EditAnimalForm({
         bio: formData.bio.trim(),
         status: formData.status,
         photos: formData.photos,
-        custom_fields: Object.keys(formData.custom_fields).length > 0 ? formData.custom_fields : null,
+        custom_fields: Object.keys(formData.custom_fields).length > 0 ? formData.custom_fields : {},
       });
       toast.success('Animal updated successfully!');
     } catch (error) {
