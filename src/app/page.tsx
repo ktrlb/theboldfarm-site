@@ -8,13 +8,14 @@ import Image from "next/image";
 import { getRandomImageFromAlbum, getImagesFromAlbums } from "@/lib/images";
 import { getImageForSection } from "@/lib/image-placements";
 import { FarmLogo } from "@/components/farm-logo";
+import { DEFAULT_FALLBACK_IMAGE } from "@/lib/image-fallbacks";
 
 async function HomeHero() {
-  // First try to get assigned image, then fall back to album images
+  // First try to get assigned image, then fall back to album images, then fallback image
   let heroImage: string | null = await getImageForSection('home-hero');
   if (!heroImage) {
     const heroImages = await getImagesFromAlbums(['farm', 'hero', 'home', 'general', 'site', 'images']);
-    heroImage = heroImages.length > 0 ? heroImages[0] : null;
+    heroImage = heroImages.length > 0 ? heroImages[0] : DEFAULT_FALLBACK_IMAGE;
   }
   const hasImage = !!heroImage;
 
@@ -98,8 +99,10 @@ async function FeatureCard({
     image = await getRandomImageFromAlbum(albumName);
   }
   
-  // No fallback to "any album" - only use assigned images or specific albums
-  // This prevents the same image from appearing everywhere
+  // Use fallback image if no image found
+  if (!image) {
+    image = DEFAULT_FALLBACK_IMAGE;
+  }
   
   return (
     <Card className="text-center hover:shadow-lg transition-shadow overflow-hidden">
@@ -199,11 +202,11 @@ export default async function HomePage() {
 }
 
 async function CTASection() {
-  // First try to get assigned image, then fall back to album images
+  // First try to get assigned image, then fall back to album images, then fallback image
   let ctaImage: string | null = await getImageForSection('home-cta');
   if (!ctaImage) {
     const ctaImages = await getImagesFromAlbums(['farm', 'animals', 'general', 'site']);
-    ctaImage = ctaImages.length > 0 ? ctaImages[Math.floor(Math.random() * ctaImages.length)] : null;
+    ctaImage = ctaImages.length > 0 ? ctaImages[Math.floor(Math.random() * ctaImages.length)] : DEFAULT_FALLBACK_IMAGE;
   }
   return (
     <section className="relative py-20 overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">

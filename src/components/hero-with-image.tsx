@@ -2,6 +2,7 @@
 
 import { useEffect, useState, createContext, useContext } from "react";
 import Image from "next/image";
+import { DEFAULT_FALLBACK_IMAGE } from "@/lib/image-fallbacks";
 
 interface HeroContextType {
   hasImage: boolean;
@@ -46,6 +47,8 @@ export function HeroWithImage({
         // If no album names provided, skip album fetching
         // Assigned images should be passed via defaultImage prop
         if (albumNames.length === 0) {
+          // Use fallback image if no album names provided
+          setHeroImage(DEFAULT_FALLBACK_IMAGE);
           setLoading(false);
           return;
         }
@@ -57,9 +60,14 @@ export function HeroWithImage({
         const data = await res.json();
         if (data.images && data.images.length > 0) {
           setHeroImage(data.images[0]);
+        } else {
+          // Use fallback image if no images found from albums
+          setHeroImage(DEFAULT_FALLBACK_IMAGE);
         }
       } catch (error) {
         console.error('[HeroWithImage] Error fetching hero image:', error);
+        // Use fallback image on error
+        setHeroImage(DEFAULT_FALLBACK_IMAGE);
       } finally {
         setLoading(false);
       }
@@ -68,6 +76,8 @@ export function HeroWithImage({
     if (albumNames.length > 0) {
       fetchImage();
     } else {
+      // Use fallback image if no album names provided
+      setHeroImage(DEFAULT_FALLBACK_IMAGE);
       setLoading(false);
     }
     // Dependencies: defaultImage and albumNames array

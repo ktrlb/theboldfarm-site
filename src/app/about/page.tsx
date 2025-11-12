@@ -6,13 +6,14 @@ import Image from "next/image";
 import { getImagesFromAlbums } from "@/lib/images";
 import { getImageForSection } from "@/lib/image-placements";
 import { FarmLogo } from "@/components/farm-logo";
+import { DEFAULT_FALLBACK_IMAGE } from "@/lib/image-fallbacks";
 
 async function AboutHero() {
-  // First try to get assigned image, then fall back to album images only if no assignment
+  // First try to get assigned image, then fall back to album images, then fallback image
   let heroImage: string | null = await getImageForSection('about-hero');
   if (!heroImage) {
     const heroImages = await getImagesFromAlbums(['farm', 'about', 'general', 'site']);
-    heroImage = heroImages.length > 0 ? heroImages[0] : null;
+    heroImage = heroImages.length > 0 ? heroImages[0] : DEFAULT_FALLBACK_IMAGE;
   }
 
   return (
@@ -220,11 +221,15 @@ export default async function AboutPage() {
 }
 
 async function AboutStoryImage() {
-  // First try to get assigned image, then fall back to album images only if no assignment
+  // First try to get assigned image, then fall back to album images, then fallback image
   let storyImage: string | null = await getImageForSection('about-story-image');
   if (!storyImage) {
     const storyImages = await getImagesFromAlbums(['farm', 'animals', 'goats', 'Farm', 'Animals', 'Goats']);
     storyImage = storyImages.length > 0 ? storyImages[0] : null;
+  }
+  // Use fallback image if no image found
+  if (!storyImage) {
+    storyImage = DEFAULT_FALLBACK_IMAGE;
   }
 
   return (
