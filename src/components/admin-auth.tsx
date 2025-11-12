@@ -38,11 +38,6 @@ export function AdminAuth({ onAuthenticated }: AdminAuthProps) {
 
     setIsLoading(true);
     setError("");
-
-    // Debug: log the password being checked (remove this in production!)
-    console.log('Checking password:', password);
-    console.log('Expected password:', ADMIN_PASSWORD);
-    console.log('Environment variable:', process.env.NEXT_PUBLIC_ADMIN_PASSWORD);
     
     // Simple password check
     if (password === ADMIN_PASSWORD) {
