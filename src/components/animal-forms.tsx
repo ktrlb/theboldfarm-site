@@ -53,10 +53,15 @@ export function AddAnimalForm({ defaultAnimalType = 'Goat', onSubmit, onClose }:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validate subtype if subtypes exist
+    if (subtypes.length > 0 && !formData.type) {
+      return; // Don't submit if subtype is required but not selected
+    }
+    
     const animalData: Omit<Animal, 'id' | 'created_at' | 'updated_at'> = {
       name: formData.name,
       animal_type: animalType,
-      type: formData.type,
+      type: subtypes.length > 0 ? formData.type : "", // Use empty string if no subtypes
       birth_date: formData.birth_date || null,
       birth_type: formData.birth_type,
       price: String(formData.price),
@@ -75,41 +80,48 @@ export function AddAnimalForm({ defaultAnimalType = 'Goat', onSubmit, onClose }:
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="animal_type">Animal Type *</Label>
-        <Select value={animalType} onValueChange={(value) => {
-          setAnimalType(value);
-          setFormData({ ...formData, animal_type: value });
-        }}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.values(ANIMAL_TYPES).map((type) => (
-              <SelectItem key={type.id} value={type.id}>
-                {type.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="p-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <Label htmlFor="animal_type">Animal Type *</Label>
+          <Select value={animalType} onValueChange={(value) => {
+            setAnimalType(value);
+            setFormData({ ...formData, animal_type: value, type: "" });
+          }}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.values(ANIMAL_TYPES).map((type) => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <div>
-        <Label htmlFor="type">Subtype *</Label>
-        <Select value={formData.type} onValueChange={(value) => setFormData({ ...formData, type: value })}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select subtype" />
-          </SelectTrigger>
-          <SelectContent>
-            {subtypes.map((subtype) => (
-              <SelectItem key={subtype} value={subtype}>
-                {subtype}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        {subtypes.length > 0 && (
+          <div>
+            <Label htmlFor="type">Subtype *</Label>
+            <Select 
+              value={formData.type} 
+              onValueChange={(value) => setFormData({ ...formData, type: value })}
+              required
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select subtype" />
+              </SelectTrigger>
+              <SelectContent>
+                {subtypes.map((subtype) => (
+                  <SelectItem key={subtype} value={subtype}>
+                    {subtype}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
       <div>
         <Label htmlFor="name">Name *</Label>
@@ -175,7 +187,7 @@ export function AddAnimalForm({ defaultAnimalType = 'Goat', onSubmit, onClose }:
           {field.type === 'text' && (
             <Input
               id={field.name}
-              value={formData.custom_fields[field.name] || ''}
+              value={String(formData.custom_fields[field.name] || '')}
               onChange={(e) => setFormData({
                 ...formData,
                 custom_fields: { ...formData.custom_fields, [field.name]: e.target.value }
@@ -186,7 +198,7 @@ export function AddAnimalForm({ defaultAnimalType = 'Goat', onSubmit, onClose }:
             <Input
               id={field.name}
               type="number"
-              value={formData.custom_fields[field.name] || ''}
+              value={formData.custom_fields[field.name] != null ? String(formData.custom_fields[field.name]) : ''}
               onChange={(e) => setFormData({
                 ...formData,
                 custom_fields: { ...formData.custom_fields, [field.name]: parseFloat(e.target.value) || 0 }
@@ -197,7 +209,7 @@ export function AddAnimalForm({ defaultAnimalType = 'Goat', onSubmit, onClose }:
             <Input
               id={field.name}
               type="date"
-              value={formData.custom_fields[field.name] || ''}
+              value={formData.custom_fields[field.name] != null ? String(formData.custom_fields[field.name]) : ''}
               onChange={(e) => setFormData({
                 ...formData,
                 custom_fields: { ...formData.custom_fields, [field.name]: e.target.value }
@@ -209,7 +221,7 @@ export function AddAnimalForm({ defaultAnimalType = 'Goat', onSubmit, onClose }:
               <input
                 type="checkbox"
                 id={field.name}
-                checked={formData.custom_fields[field.name] || false}
+                checked={Boolean(formData.custom_fields[field.name])}
                 onChange={(e) => setFormData({
                   ...formData,
                   custom_fields: { ...formData.custom_fields, [field.name]: e.target.checked }
@@ -325,6 +337,7 @@ export function AddAnimalForm({ defaultAnimalType = 'Goat', onSubmit, onClose }:
         </Button>
       </div>
     </form>
+    </div>
   );
 }
 
@@ -461,7 +474,7 @@ export function EditAnimalForm({
           {field.type === 'text' && (
             <Input
               id={field.name}
-              value={formData.custom_fields[field.name] || ''}
+              value={String(formData.custom_fields[field.name] || '')}
               onChange={(e) => setFormData({
                 ...formData,
                 custom_fields: { ...formData.custom_fields, [field.name]: e.target.value }
@@ -472,7 +485,7 @@ export function EditAnimalForm({
             <Input
               id={field.name}
               type="number"
-              value={formData.custom_fields[field.name] || ''}
+              value={formData.custom_fields[field.name] != null ? String(formData.custom_fields[field.name]) : ''}
               onChange={(e) => setFormData({
                 ...formData,
                 custom_fields: { ...formData.custom_fields, [field.name]: parseFloat(e.target.value) || 0 }
@@ -483,7 +496,7 @@ export function EditAnimalForm({
             <Input
               id={field.name}
               type="date"
-              value={formData.custom_fields[field.name] || ''}
+              value={formData.custom_fields[field.name] != null ? String(formData.custom_fields[field.name]) : ''}
               onChange={(e) => setFormData({
                 ...formData,
                 custom_fields: { ...formData.custom_fields, [field.name]: e.target.value }
@@ -495,7 +508,7 @@ export function EditAnimalForm({
               <input
                 type="checkbox"
                 id={field.name}
-                checked={formData.custom_fields[field.name] || false}
+                checked={Boolean(formData.custom_fields[field.name])}
                 onChange={(e) => setFormData({
                   ...formData,
                   custom_fields: { ...formData.custom_fields, [field.name]: e.target.checked }
@@ -901,7 +914,12 @@ export function AnimalGrazingHistory({ animalId }: { animalId: number }) {
   const loadHistory = async () => {
     setLoading(true);
     const grazingHistory = await animalContext.getAnimalGrazingHistory(animalId);
-    setHistory(grazingHistory);
+    // Map API response to include pasture_name (which may not be in the response)
+    setHistory(grazingHistory.map((item: any) => ({
+      ...item,
+      pasture_name: item.pasture_name || null,
+      created_at: item.created_at instanceof Date ? item.created_at.toISOString() : String(item.created_at || ''),
+    })));
     setLoading(false);
   };
 

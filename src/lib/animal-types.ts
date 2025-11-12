@@ -78,6 +78,38 @@ export const ANIMAL_TYPES: Record<string, AnimalTypeDefinition> = {
       { name: 'egg_color', type: 'text', label: 'Egg Color', required: false },
     ],
   },
+  Dog: {
+    id: 'Dog',
+    name: 'Dog',
+    subtypes: [
+      'Adult Dog',
+      'Puppy',
+      'Senior Dog',
+      'Working Dog',
+      'Pet Dog',
+    ],
+    customFields: [
+      { name: 'breed', type: 'text', label: 'Breed', required: false },
+      { name: 'weight', type: 'number', label: 'Weight (lbs)', required: false },
+      { name: 'color', type: 'text', label: 'Color/Markings', required: false },
+    ],
+  },
+  Cat: {
+    id: 'Cat',
+    name: 'Cat',
+    subtypes: [
+      'Adult Cat',
+      'Kitten',
+      'Senior Cat',
+      'Indoor Cat',
+      'Outdoor Cat',
+    ],
+    customFields: [
+      { name: 'breed', type: 'text', label: 'Breed', required: false },
+      { name: 'weight', type: 'number', label: 'Weight (lbs)', required: false },
+      { name: 'color', type: 'text', label: 'Color/Markings', required: false },
+    ],
+  },
 };
 
 export function getAnimalTypes(): AnimalTypeDefinition[] {

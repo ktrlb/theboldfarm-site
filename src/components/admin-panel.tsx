@@ -39,7 +39,8 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
 
   const handleUpdateGoat = async (id: number, updates: Partial<Database['public']['Tables']['goats']['Update']>) => {
     // Convert updates to Animal format if needed
-    const animalUpdates: any = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const animalUpdates: Partial<any> = {
       ...updates,
       ...(updates.price !== undefined && { price: String(updates.price) }),
     };
@@ -157,7 +158,12 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setEditingGoat(goat)}
+                      onClick={() => setEditingGoat({
+                        ...goat,
+                        price: Number(goat.price || 0),
+                        created_at: goat.created_at instanceof Date ? goat.created_at.toISOString() : String(goat.created_at),
+                        updated_at: goat.updated_at instanceof Date ? goat.updated_at.toISOString() : String(goat.updated_at),
+                      } as unknown as GoatRow)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>

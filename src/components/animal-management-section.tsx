@@ -285,6 +285,10 @@ function getAnimalPlaceholder(animal: Animal): string {
       return '🐴';
     case 'Chicken':
       return '🐔';
+    case 'Dog':
+      return '🐕';
+    case 'Cat':
+      return '🐈';
     default:
       return '🐾';
   }
