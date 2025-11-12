@@ -15,7 +15,15 @@ export async function GET(
     
     return NextResponse.json({ imageUrl: imageUrl || null });
   } catch (error) {
-    console.error(`[API /image-placements/${section}] Error:`, error);
+    // Try to get section from params for error logging, but don't fail if it's not available
+    let sectionName = 'unknown';
+    try {
+      const { section } = await params;
+      sectionName = section;
+    } catch {
+      // If we can't get params, use 'unknown'
+    }
+    console.error(`[API /image-placements/${sectionName}] Error:`, error);
     return NextResponse.json(
       { error: 'Failed to fetch image placement', imageUrl: null },
       { status: 500 }

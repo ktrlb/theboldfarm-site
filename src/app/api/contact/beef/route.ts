@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { generateEmailTemplate, formatEmailField, formatEmailMessage, generatePlainTextEmail } from "@/lib/email-templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -24,28 +25,28 @@ export async function POST(request: Request) {
     };
     const shareTypeDisplay = shareTypeMap[shareType] || shareType;
 
+    // Build email content for farm owners
+    const ownerEmailContent = `
+      ${formatEmailField("Name", name)}
+      ${formatEmailField("Email", email)}
+      ${phone ? formatEmailField("Phone", phone) : ""}
+      ${formatEmailField("Share Type", shareTypeDisplay)}
+      ${message ? formatEmailMessage("Additional Information", message) : ""}
+    `;
+
     // Send email to farm owners
     const { data, error } = await resend.emails.send({
       from: "The Bold Farm <noreply@theboldfarm.com>",
       to: ["karlie@theboldfarm.com", "rich@theboldfarm.com"],
       subject: `New Beef Interest Form: ${name}`,
-      html: `
-        <h2>New Beef Interest Form Submission</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ""}
-        <p><strong>Share Type:</strong> ${shareTypeDisplay}</p>
-        ${message ? `<p><strong>Additional Information:</strong></p><p>${message.replace(/\n/g, "<br>")}</p>` : ""}
-      `,
-      text: `
-New Beef Interest Form Submission
-
-Name: ${name}
-Email: ${email}
-${phone ? `Phone: ${phone}` : ""}
-Share Type: ${shareTypeDisplay}
-${message ? `\nAdditional Information:\n${message}` : ""}
-      `,
+      html: generateEmailTemplate({
+        title: "New Beef Interest Form Submission",
+        content: ownerEmailContent,
+      }),
+      text: generatePlainTextEmail({
+        title: "New Beef Interest Form Submission",
+        content: `Name: ${name}\nEmail: ${email}${phone ? `\nPhone: ${phone}` : ""}\nShare Type: ${shareTypeDisplay}${message ? `\n\nAdditional Information:\n${message}` : ""}`,
+      }),
     });
 
     if (error) {
@@ -56,34 +57,30 @@ ${message ? `\nAdditional Information:\n${message}` : ""}
       );
     }
 
+    // Build confirmation email content
+    const confirmationContent = `
+      <p style="margin: 0 0 20px 0;">We've received your interest form for our farm-raised beef. Here's a summary of your submission:</p>
+      <div style="background-color: #F5F1E8; padding: 15px; border-left: 3px solid #7CB342; border-radius: 4px; margin: 0 0 20px 0;">
+        ${formatEmailField("Share Type", shareTypeDisplay)}
+      </div>
+      <p style="margin: 0 0 20px 0;">We'll review your submission and contact you soon with more information about availability, pricing, and next steps.</p>
+      <p style="margin: 0 0 20px 0;">If you have any questions in the meantime, feel free to reach out to us at <a href="mailto:karlie@theboldfarm.com" style="color: #7CB342; text-decoration: none;">karlie@theboldfarm.com</a>.</p>
+      <p style="margin: 0;">Thank you for your interest in The Bold Farm!</p>
+    `;
+
     // Send confirmation email to the requestor
     await resend.emails.send({
       from: "The Bold Farm <noreply@theboldfarm.com>",
       to: [email],
       subject: "Thank You for Your Interest in Our Farm-Raised Beef",
-      html: `
-        <h2>Thank You, ${name}!</h2>
-        <p>We've received your interest form for our farm-raised beef. Here's a summary of your submission:</p>
-        <ul>
-          <li><strong>Share Type:</strong> ${shareTypeDisplay}</li>
-        </ul>
-        <p>We'll review your submission and contact you soon with more information about availability, pricing, and next steps.</p>
-        <p>If you have any questions in the meantime, feel free to reach out to us at <a href="mailto:karlie@theboldfarm.com">karlie@theboldfarm.com</a>.</p>
-        <p>Thank you for your interest in The Bold Farm!</p>
-      `,
-      text: `
-Thank You, ${name}!
-
-We've received your interest form for our farm-raised beef. Here's a summary of your submission:
-
-Share Type: ${shareTypeDisplay}
-
-We'll review your submission and contact you soon with more information about availability, pricing, and next steps.
-
-If you have any questions in the meantime, feel free to reach out to us at karlie@theboldfarm.com.
-
-Thank you for your interest in The Bold Farm!
-      `,
+      html: generateEmailTemplate({
+        title: `Thank You, ${name}!`,
+        content: confirmationContent,
+      }),
+      text: generatePlainTextEmail({
+        title: `Thank You, ${name}!`,
+        content: `We've received your interest form for our farm-raised beef. Here's a summary of your submission:\n\nShare Type: ${shareTypeDisplay}\n\nWe'll review your submission and contact you soon with more information about availability, pricing, and next steps.\n\nIf you have any questions in the meantime, feel free to reach out to us at karlie@theboldfarm.com.\n\nThank you for your interest in The Bold Farm!`,
+      }),
     });
 
     return NextResponse.json({ success: true, messageId: data?.id });

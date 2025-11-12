@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { generateEmailTemplate, formatEmailField, formatEmailMessage, generatePlainTextEmail } from "@/lib/email-templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -25,29 +26,27 @@ export async function POST(request: Request) {
       );
     }
 
+    // Build email content
+    const emailContent = `
+      ${formatEmailField("Name", name)}
+      ${formatEmailField("Email", email)}
+      ${formatEmailField("Reason", why)}
+      ${formatEmailMessage("Message", message)}
+    `;
+
     // Send email using Resend
     const { data, error } = await resend.emails.send({
       from: "The Bold Farm <noreply@theboldfarm.com>",
       to: ["karlie@theboldfarm.com"],
       subject: `Contact Form: ${why}`,
-      html: `
-        <h2>New Contact Form Submission</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Reason:</strong> ${why}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message.replace(/\n/g, "<br>")}</p>
-      `,
-      text: `
-New Contact Form Submission
-
-Name: ${name}
-Email: ${email}
-Reason: ${why}
-
-Message:
-${message}
-      `,
+      html: generateEmailTemplate({
+        title: "New Contact Form Submission",
+        content: emailContent,
+      }),
+      text: generatePlainTextEmail({
+        title: "New Contact Form Submission",
+        content: `Name: ${name}\nEmail: ${email}\nReason: ${why}\n\nMessage:\n${message}`,
+      }),
     });
 
     if (error) {

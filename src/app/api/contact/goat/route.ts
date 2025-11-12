@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { generateEmailTemplate, formatEmailField, formatEmailMessage, emailDivider, generatePlainTextEmail } from "@/lib/email-templates";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -25,36 +26,30 @@ export async function POST(request: Request) {
       );
     }
 
+    // Build email content
+    const emailContent = `
+      ${formatEmailField("Goat ID", goatId.toString())}
+      ${formatEmailField("Goat Name", goatName)}
+      ${emailDivider()}
+      ${formatEmailField("Name", name)}
+      ${formatEmailField("Email", email)}
+      ${phone ? formatEmailField("Phone", phone) : ''}
+      ${formatEmailMessage("Message", message)}
+    `;
+
     // Send email using Resend
     const { data, error } = await resend.emails.send({
       from: "The Bold Farm <noreply@theboldfarm.com>",
       to: ["karlie@theboldfarm.com"],
       subject: `Inquiry About ${goatName}`,
-      html: `
-        <h2>New Inquiry About ${goatName}</h2>
-        <p><strong>Goat ID:</strong> ${goatId}</p>
-        <p><strong>Goat Name:</strong> ${goatName}</p>
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;" />
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ''}
-        <p><strong>Message:</strong></p>
-        <p>${message.replace(/\n/g, "<br>")}</p>
-      `,
-      text: `
-New Inquiry About ${goatName}
-
-Goat ID: ${goatId}
-Goat Name: ${goatName}
-
----
-Name: ${name}
-Email: ${email}
-${phone ? `Phone: ${phone}` : ''}
-
-Message:
-${message}
-      `,
+      html: generateEmailTemplate({
+        title: `New Inquiry About ${goatName}`,
+        content: emailContent,
+      }),
+      text: generatePlainTextEmail({
+        title: `New Inquiry About ${goatName}`,
+        content: `Goat ID: ${goatId}\nGoat Name: ${goatName}\n\n---\nName: ${name}\nEmail: ${email}${phone ? `\nPhone: ${phone}` : ''}\n\nMessage:\n${message}`,
+      }),
     });
 
     if (error) {
