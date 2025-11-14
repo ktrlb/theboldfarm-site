@@ -499,9 +499,9 @@ export default function GoatsPage() {
                 <div className="text-6xl">🐐</div>
               </div>
               <CardHeader>
-                <CardTitle>Spring 2024 Kidding</CardTitle>
+                <CardTitle>Spring 2026 Kidding</CardTitle>
                 <CardDescription>
-                  Expected: March-April 2024
+                  Expected: March-April 2026
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -520,9 +520,9 @@ export default function GoatsPage() {
                 <div className="text-6xl">🐐</div>
               </div>
               <CardHeader>
-                <CardTitle>Fall 2024 Kidding</CardTitle>
+                <CardTitle>Fall 2026 Kidding</CardTitle>
                 <CardDescription>
-                  Expected: September-October 2024
+                  Expected: September-October 2026
                 </CardDescription>
               </CardHeader>
               <CardContent>
