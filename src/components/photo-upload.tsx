@@ -79,8 +79,11 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
   }, []);
 
   const handleFiles = useCallback(async (files: FileList | File[]) => {
+    console.log('handleFiles called with:', files);
     const fileArray = Array.from(files);
     const imageFiles = fileArray.filter(file => file.type.startsWith('image/'));
+    
+    console.log('Filtered image files:', imageFiles.length, imageFiles.map(f => ({ name: f.name, type: f.type })));
 
     if (imageFiles.length === 0) {
       alert('Please select image files only');
@@ -92,6 +95,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
       return;
     }
 
+    console.log('Starting upload process for', imageFiles.length, 'files');
     setUploading(true);
     setUploadProgress(imageFiles.map(file => ({ fileName: file.name, status: 'compressing' as const })));
 
@@ -165,12 +169,15 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
   }, []);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      handleFiles(e.target.files);
-      // Reset the input value so the same file can be selected again if needed
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    const files = e.target.files;
+    // Reset the input value immediately so the same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    if (files && files.length > 0) {
+      console.log('File input changed, files selected:', files.length);
+      handleFiles(files);
     }
   }, [handleFiles]);
 
@@ -198,14 +205,19 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={(e) => {
-          // Don't trigger if clicking on a button or other interactive element
+          // Don't trigger if clicking on a button or the file input itself
           const target = e.target as HTMLElement;
-          if (target.tagName === 'BUTTON' || target.closest('button')) {
+          if (target.tagName === 'BUTTON' || target.closest('button') || target === fileInputRef.current || target.closest('input[type="file"]')) {
             return;
           }
           // Trigger file input click
           if (!uploading && fileInputRef.current) {
+            console.log('Click detected, triggering file input');
+            e.preventDefault();
+            e.stopPropagation();
             fileInputRef.current.click();
+          } else {
+            console.log('Not triggering file input - uploading:', uploading, 'ref:', !!fileInputRef.current);
           }
         }}
         className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -220,6 +232,10 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
           multiple
           accept="image/*"
           onChange={handleChange}
+          onClick={(e) => {
+            // Allow the file input's native click to work
+            e.stopPropagation();
+          }}
           disabled={uploading}
           className="hidden"
         />
@@ -282,6 +298,20 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
               <p className="text-xs text-gray-500">
                 PNG, JPG, GIF up to 50MB - auto-resized to 2MB ({photos.length}/{maxPhotos} photos)
               </p>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (fileInputRef.current) {
+                    console.log('Button click - triggering file input');
+                    fileInputRef.current.click();
+                  }
+                }}
+                className="mt-4 px-4 py-2 bg-fresh-sprout-green text-white rounded-lg hover:opacity-90 text-sm font-medium"
+              >
+                Choose Files
+              </button>
             </>
           )}
         </div>
