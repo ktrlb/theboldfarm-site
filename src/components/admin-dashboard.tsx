@@ -13,6 +13,8 @@ import { PhotoUpload } from "@/components/photo-upload";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AnimalManagementSection } from "@/components/animal-management-section";
 import { AnimalProvider } from "@/lib/animal-context";
+import { PastureManagementSection } from "@/components/pasture-management-section";
+import { PastureProvider } from "@/lib/pasture-context";
 import { AddProductForm, EditProductForm } from "@/components/admin-panel";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,12 +65,9 @@ export function AdminDashboard({ onLogout: _onLogout }: AdminDashboardProps) {
         </TabsContent>
 
         <TabsContent value="pastures">
-          <div className="text-center py-12">
-            <p className="text-gray-600 mb-4">Pasture Management</p>
-            <Button asChild>
-              <a href="/admin/pastures">Open Pasture Management</a>
-            </Button>
-          </div>
+          <PastureProvider>
+            <PastureManagementSection />
+          </PastureProvider>
         </TabsContent>
 
         <TabsContent value="chores">

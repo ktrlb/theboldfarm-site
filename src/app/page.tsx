@@ -45,7 +45,7 @@ async function HomeHero() {
               variant={hasImage ? "dark" : "light"} 
               full={true} 
               size="xl" 
-              className="drop-shadow-lg"
+              className="drop-shadow-lg h-24 sm:h-32 md:h-40 w-auto max-w-[90vw]"
               priority 
             />
           </div>
