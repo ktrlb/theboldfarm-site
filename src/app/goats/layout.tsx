@@ -3,16 +3,12 @@ import { getImageForSection } from "@/lib/image-placements";
 import { DEFAULT_FALLBACK_IMAGE } from "@/lib/image-fallbacks";
 
 export async function generateMetadata(): Promise<Metadata> {
-  // Get the beef hero image for Open Graph
-  let ogImage = await getImageForSection('beef-hero');
+  // Get the goats hero image for Open Graph
+  let ogImage = await getImageForSection('goats-hero');
   if (!ogImage) {
-    // Use fallback image if no hero image is set
     ogImage = DEFAULT_FALLBACK_IMAGE;
   }
 
-  // Ensure the image URL is absolute for Open Graph
-  // If it's already absolute (starts with http), use it as-is
-  // If it's relative, we need to make it absolute
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
     'https://theboldfarm.com';
@@ -21,8 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
     ? ogImage 
     : `${baseUrl}${ogImage.startsWith('/') ? '' : '/'}${ogImage.replace(/ /g, '%20')}`;
 
-  const title = "Farm-Fresh Beef, Raised with Care | The Bold Farm";
-  const description = "Experience the difference of knowing exactly where your beef comes from. Our cattle are raised on pasture with care and attention, resulting in high-quality beef that you can feel good about serving your family. Reserve your quarter or half cow today.";
+  const title = "Nigerian Dwarf Goats for Sale | The Bold Farm";
+  const description = "Quality Nigerian Dwarf goats available for your homestead. We prioritize our goats' health & socialization, and will be available for questions before and after you bring your new goats home.";
 
   return {
     title,
@@ -30,14 +26,14 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title,
       description,
-      url: `${baseUrl}/beef`,
+      url: `${baseUrl}/goats`,
       siteName: "The Bold Farm",
       images: [
         {
           url: ogImageUrl,
           width: 1200,
           height: 630,
-          alt: "The Bold Farm - Farm-Fresh Beef",
+          alt: "The Bold Farm - Nigerian Dwarf Goats",
         },
       ],
       locale: "en_US",
@@ -52,7 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function BeefLayout({
+export default function GoatsLayout({
   children,
 }: {
   children: React.ReactNode;

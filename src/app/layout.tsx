@@ -23,6 +23,28 @@ export const metadata: Metadata = {
   title: "The Bold Farm - Nigerian Dwarf Goats & Family Cows",
   description: "Quality Nigerian Dwarf dairy goats, family cows, and homestead products. Visit our farm for workshops and events.",
   keywords: "Nigerian Dwarf goats, dairy goats, family cows, homestead, farm, workshops",
+  openGraph: {
+    title: "The Bold Farm - Nigerian Dwarf Goats & Family Cows",
+    description: "Quality Nigerian Dwarf dairy goats, family cows, and homestead products. Building a sustainable future, one animal at a time.",
+    url: "https://theboldfarm.com",
+    siteName: "The Bold Farm",
+    images: [
+      {
+        url: "https://theboldfarm.com/bold%20farm%20pond.png",
+        width: 1200,
+        height: 630,
+        alt: "The Bold Farm",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "The Bold Farm - Nigerian Dwarf Goats & Family Cows",
+    description: "Quality Nigerian Dwarf dairy goats, family cows, and homestead products.",
+    images: ["https://theboldfarm.com/bold%20farm%20pond.png"],
+  },
 };
 
 export default function RootLayout({
