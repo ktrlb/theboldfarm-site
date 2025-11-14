@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Upload, X, Loader2 } from "lucide-react";
 
 interface PhotoUploadProps {
@@ -21,6 +21,11 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
   const [currentProcessing, setCurrentProcessing] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Debug: Log when photos prop changes
+  useEffect(() => {
+    console.log('PhotoUpload: photos prop changed:', photos.length, photos);
+  }, [photos]);
 
   const uploadPhoto = useCallback(async (file: File, progressIndex: number): Promise<string> => {
     // Update progress to show compression
@@ -119,10 +124,14 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
       if (urls.length > 0) {
         // Update photos with new URLs
         const updatedPhotos = [...photos, ...urls];
+        console.log('Calling onPhotosChange with:', updatedPhotos.length, 'photos');
+        console.log('Current photos before update:', photos);
+        console.log('New URLs to add:', urls);
         onPhotosChange(updatedPhotos);
-        console.log('Photos updated:', updatedPhotos);
+        console.log('onPhotosChange called, updated photos:', updatedPhotos);
       } else {
-        console.warn('No URLs returned from upload');
+        console.warn('No URLs returned from upload - all uploads may have failed');
+        alert('No photos were uploaded. Please check the console for errors.');
       }
 
       // Clear progress after a short delay to show completion
@@ -170,14 +179,19 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    // Reset the input value immediately so the same file can be selected again
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
     
     if (files && files.length > 0) {
-      console.log('File input changed, files selected:', files.length);
-      handleFiles(files);
+      console.log('File input changed, files selected:', files.length, Array.from(files).map(f => f.name));
+      // Create a copy of the FileList before resetting
+      const fileArray = Array.from(files);
+      // Reset the input value after we've captured the files
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      // Process the files
+      handleFiles(fileArray);
+    } else {
+      console.log('File input changed but no files selected');
     }
   }, [handleFiles]);
 
@@ -208,13 +222,13 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
           // Don't trigger if clicking on a button or the file input itself
           const target = e.target as HTMLElement;
           if (target.tagName === 'BUTTON' || target.closest('button') || target === fileInputRef.current || target.closest('input[type="file"]')) {
+            console.log('Click ignored - button or input clicked');
             return;
           }
           // Trigger file input click
           if (!uploading && fileInputRef.current) {
-            console.log('Click detected, triggering file input');
-            e.preventDefault();
-            e.stopPropagation();
+            console.log('Click detected on drop zone, triggering file input');
+            // Don't prevent default - let the click bubble naturally
             fileInputRef.current.click();
           } else {
             console.log('Not triggering file input - uploading:', uploading, 'ref:', !!fileInputRef.current);
@@ -232,12 +246,9 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
           multiple
           accept="image/*"
           onChange={handleChange}
-          onClick={(e) => {
-            // Allow the file input's native click to work
-            e.stopPropagation();
-          }}
           disabled={uploading}
           className="hidden"
+          style={{ display: 'none' }}
         />
 
         <div className="space-y-2 drop-zone-content">
@@ -303,9 +314,19 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (fileInputRef.current) {
-                    console.log('Button click - triggering file input');
-                    fileInputRef.current.click();
+                  console.log('Choose Files button clicked');
+                  console.log('fileInputRef.current:', fileInputRef.current);
+                  console.log('uploading:', uploading);
+                  if (!uploading && fileInputRef.current) {
+                    console.log('Button click - triggering file input click()');
+                    try {
+                      fileInputRef.current.click();
+                      console.log('File input click() called successfully');
+                    } catch (error) {
+                      console.error('Error calling file input click():', error);
+                    }
+                  } else {
+                    console.log('Cannot trigger file input - uploading:', uploading, 'ref exists:', !!fileInputRef.current);
                   }
                 }}
                 className="mt-4 px-4 py-2 bg-fresh-sprout-green text-white rounded-lg hover:opacity-90 text-sm font-medium"
