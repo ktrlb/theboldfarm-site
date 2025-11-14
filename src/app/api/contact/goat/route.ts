@@ -9,6 +9,10 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, email, phone, message, goatId, goatName } = body;
 
+    // NOTE: This endpoint only sends an email notification.
+    // It does NOT update the goat's status in the database.
+    // Status changes must be done manually in the admin panel.
+
     // Validate required fields
     if (!name || !email || !message || !goatId || !goatName) {
       return NextResponse.json(

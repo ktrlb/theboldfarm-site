@@ -301,7 +301,13 @@ export default function GoatsPage() {
                       {goat.bio}
                     </p>
 
-                    {goat.status === "Available" ? (
+                    {goat.status === "Reserved" ? (
+                      <div className="text-center py-2">
+                        <Badge variant="secondary" className="text-gray-600">
+                          Currently Reserved
+                        </Badge>
+                      </div>
+                    ) : (
                       <Button 
                         variant="outline" 
                         className="w-full"
@@ -312,12 +318,6 @@ export default function GoatsPage() {
                       >
                         Contact About This Goat
                       </Button>
-                    ) : (
-                      <div className="text-center py-2">
-                        <Badge variant="secondary" className="text-gray-600">
-                          Currently Reserved
-                        </Badge>
-                      </div>
                     )}
                   </CardContent>
                 </Card>
@@ -449,7 +449,13 @@ export default function GoatsPage() {
                     {goat.bio}
                   </p>
 
-                  {isGoatForSale(goat) && goat.status === "Available" ? (
+                  {goat.status === "Reserved" ? (
+                    <div className="text-center py-2">
+                      <Badge variant="secondary" className="text-gray-600">
+                        Currently Reserved
+                      </Badge>
+                    </div>
+                  ) : isGoatForSale(goat) ? (
                     <Button 
                       variant="outline" 
                       className="w-full"
@@ -460,16 +466,10 @@ export default function GoatsPage() {
                     >
                       Contact About This Goat
                     </Button>
-                  ) : goat.status === "Available" ? (
-                    <div className="text-center py-2">
-                      <Badge variant="secondary" className="text-gray-600">
-                        Not for Sale
-                      </Badge>
-                    </div>
                   ) : (
                     <div className="text-center py-2">
                       <Badge variant="secondary" className="text-gray-600">
-                        Currently Reserved
+                        Not for Sale
                       </Badge>
                     </div>
                   )}
