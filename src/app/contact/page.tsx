@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, MapPin, Clock } from "lucide-react";
+import Image from "next/image";
 import { ContactHero } from "@/components/contact-hero";
 import { toast } from "sonner";
 
@@ -140,6 +141,19 @@ function ContactForm() {
                   {isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>
+              
+              {/* Image for desktop design balance - hidden on mobile */}
+              <div className="hidden lg:block mt-8">
+                <div className="relative h-64 rounded-lg overflow-hidden">
+                  <Image
+                    src="/bold farm pond.png"
+                    alt="The Bold Farm"
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 1024px) 0vw, 50vw"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Contact Information */}
@@ -156,13 +170,13 @@ function ContactForm() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <Mail className="h-5 w-5 mr-2 text-honey-gold" />
+                      <Mail className="h-5 w-5 mr-2 text-fresh-sprout-green" />
                       Email
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <CardDescription>
-                      <a href="mailto:karlie@theboldfarm.com" className="text-honey-gold hover:text-fresh-sprout-green">
+                      <a href="mailto:karlie@theboldfarm.com" className="text-fresh-sprout-green hover:opacity-80">
                         karlie@theboldfarm.com
                       </a>
                     </CardDescription>
@@ -172,7 +186,7 @@ function ContactForm() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <MapPin className="h-5 w-5 mr-2 text-honey-gold" />
+                      <MapPin className="h-5 w-5 mr-2 text-fresh-sprout-green" />
                       Location
                     </CardTitle>
                   </CardHeader>
@@ -188,7 +202,7 @@ function ContactForm() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <Clock className="h-5 w-5 mr-2 text-honey-gold" />
+                      <Clock className="h-5 w-5 mr-2 text-fresh-sprout-green" />
                       Response Time
                     </CardTitle>
                   </CardHeader>

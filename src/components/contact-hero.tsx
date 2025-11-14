@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { HeroWithImage } from "./hero-with-image";
+import { FarmLogo } from "./farm-logo";
 
 export function ContactHero() {
   const [assignedImage, setAssignedImage] = useState<string | null>(null);
@@ -29,13 +30,18 @@ export function ContactHero() {
       defaultImage={assignedImage || undefined}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 className="text-4xl font-bold mb-6 drop-shadow-lg">
-          Contact Us
+        <h1 className="text-4xl md:text-5xl font-bold mb-6 drop-shadow-lg">
+          Contact
         </h1>
-        <p className="text-xl max-w-3xl mx-auto drop-shadow-lg">
-          Have questions about our goats, want to visit the farm, or interested in our products? 
-          We'd love to hear from you!
-        </p>
+        <div className="flex justify-center mb-6">
+          <FarmLogo 
+            variant="auto" 
+            full={true} 
+            size="lg" 
+            className="drop-shadow-lg"
+            priority 
+          />
+        </div>
       </div>
     </HeroWithImage>
   );
