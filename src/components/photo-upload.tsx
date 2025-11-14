@@ -22,7 +22,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
   const [currentProcessing, setCurrentProcessing] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadPhoto = async (file: File, progressIndex: number): Promise<string> => {
+  const uploadPhoto = useCallback(async (file: File, progressIndex: number): Promise<string> => {
     // Update progress to show compression
     setUploadProgress(prev => {
       const updated = [...prev];
@@ -49,6 +49,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error || 'Upload failed';
+      console.error('Upload failed:', errorMessage, errorData);
       setUploadProgress(prev => {
         const updated = [...prev];
         updated[progressIndex] = { fileName: file.name, status: 'error', error: errorMessage };
@@ -57,7 +58,15 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
       throw new Error(errorMessage);
     }
 
-    const { url } = await response.json();
+    const data = await response.json();
+    const url = data.url;
+    
+    if (!url) {
+      console.error('No URL returned from upload:', data);
+      throw new Error('No URL returned from upload');
+    }
+    
+    console.log('Upload successful:', url);
     
     // Mark as complete
     setUploadProgress(prev => {
@@ -67,9 +76,9 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
     });
     
     return url;
-  };
+  }, []);
 
-  const handleFiles = async (files: FileList | File[]) => {
+  const handleFiles = useCallback(async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
     const imageFiles = fileArray.filter(file => file.type.startsWith('image/'));
 
@@ -104,7 +113,12 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
       setCurrentProcessing(null);
 
       if (urls.length > 0) {
-        onPhotosChange([...photos, ...urls]);
+        // Update photos with new URLs
+        const updatedPhotos = [...photos, ...urls];
+        onPhotosChange(updatedPhotos);
+        console.log('Photos updated:', updatedPhotos);
+      } else {
+        console.warn('No URLs returned from upload');
       }
 
       // Clear progress after a short delay to show completion
@@ -124,7 +138,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
       // Always ensure uploading is false
       setUploading(false);
     }
-  };
+  }, [photos, maxPhotos, onPhotosChange, uploadPhoto]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -136,7 +150,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
         handleFiles(e.dataTransfer.files);
       }
     },
-    [] // eslint-disable-line react-hooks/exhaustive-deps
+    [handleFiles]
   );
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -150,12 +164,15 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
     }
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       handleFiles(e.target.files);
+      // Reset the input value so the same file can be selected again if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
-  };
+  }, [handleFiles]);
 
   const removePhoto = async (index: number) => {
     const photoUrl = photos[index];
@@ -181,8 +198,13 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={(e) => {
+          // Don't trigger if clicking on a button or other interactive element
+          const target = e.target as HTMLElement;
+          if (target.tagName === 'BUTTON' || target.closest('button')) {
+            return;
+          }
+          // Trigger file input click
           if (!uploading && fileInputRef.current) {
-            e.preventDefault();
             fileInputRef.current.click();
           }
         }}
@@ -202,7 +224,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
           className="hidden"
         />
 
-        <div className="space-y-2">
+        <div className="space-y-2 drop-zone-content">
           {uploading ? (
             <>
               <Loader2 className="h-12 w-12 text-fresh-sprout-green mx-auto animate-spin" />

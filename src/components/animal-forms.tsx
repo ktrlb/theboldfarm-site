@@ -844,6 +844,9 @@ function AddHealthRecordForm({
                 <SelectItem value="Illness">Illness</SelectItem>
                 <SelectItem value="Medication">Medication</SelectItem>
                 <SelectItem value="De-worming">De-worming</SelectItem>
+                <SelectItem value="Breeding">Breeding</SelectItem>
+                <SelectItem value="Kidding">Kidding</SelectItem>
+                <SelectItem value="Disbudding/Dehorning">Disbudding/Dehorning</SelectItem>
                 <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>

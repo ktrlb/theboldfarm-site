@@ -78,7 +78,7 @@ export const animalHealthRecords = pgTable('animal_health_records', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   animal_id: bigint('animal_id', { mode: 'number' }).notNull().references(() => animals.id, { onDelete: 'cascade' }),
   record_date: date('record_date').notNull(),
-  record_type: text('record_type').notNull(), // 'Vaccination', 'Health Check', 'Treatment', 'Injury', 'Illness', 'Medication', 'De-worming', etc.
+  record_type: text('record_type').notNull(), // 'Vaccination', 'Health Check', 'Treatment', 'Injury', 'Illness', 'Medication', 'De-worming', 'Breeding', 'Kidding', 'Disbudding/Dehorning', etc.
   title: text('title').notNull(),
   description: text('description'),
   veterinarian: text('veterinarian'), // Vet name or clinic
