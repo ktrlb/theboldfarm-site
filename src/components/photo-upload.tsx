@@ -27,6 +27,90 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
     console.log('PhotoUpload: photos prop changed:', photos.length, photos);
   }, [photos]);
 
+  // Client-side image compression using Canvas API
+  const compressImage = useCallback(async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          // Store original dimensions
+          const originalWidth = img.width;
+          const originalHeight = img.height;
+          
+          // Calculate initial dimensions (max 2048px on longest side)
+          const MAX_DIMENSION = 2048;
+          let currentWidth = originalWidth;
+          let currentHeight = originalHeight;
+          
+          if (currentWidth > currentHeight && currentWidth > MAX_DIMENSION) {
+            currentHeight = (currentHeight / currentWidth) * MAX_DIMENSION;
+            currentWidth = MAX_DIMENSION;
+          } else if (currentHeight > MAX_DIMENSION) {
+            currentWidth = (currentWidth / currentHeight) * MAX_DIMENSION;
+            currentHeight = MAX_DIMENSION;
+          }
+
+          // Create canvas
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'));
+            return;
+          }
+
+          // Convert to blob with quality compression
+          // Iteratively reduce quality and dimensions until under 4.5MB limit
+          const VERCEL_LIMIT = 4.5 * 1024 * 1024; // 4.5MB
+          const aspectRatio = originalHeight / originalWidth;
+          
+          const tryCompress = (quality: number, width: number, height: number): void => {
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.toBlob(
+              (blob) => {
+                if (!blob) {
+                  reject(new Error('Failed to compress image'));
+                  return;
+                }
+
+                // If still too large and we can reduce quality more, try again
+                if (blob.size > VERCEL_LIMIT && quality > 0.3) {
+                  const newQuality = Math.max(0.3, quality - 0.1);
+                  tryCompress(newQuality, width, height);
+                } else if (blob.size > VERCEL_LIMIT && width > 800) {
+                  // If still too large at minimum quality, reduce dimensions further
+                  const newWidth = Math.max(800, Math.floor(width * 0.8));
+                  const newHeight = Math.floor(newWidth * aspectRatio);
+                  tryCompress(0.5, newWidth, newHeight);
+                } else {
+                  // Create a new File from the blob
+                  const compressedFile = new File([blob], file.name, {
+                    type: 'image/jpeg',
+                    lastModified: Date.now(),
+                  });
+                  resolve(compressedFile);
+                }
+              },
+              'image/jpeg',
+              quality
+            );
+          };
+          
+          // Start with 0.85 quality and initial dimensions
+          tryCompress(0.85, currentWidth, currentHeight);
+        };
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
   const uploadPhoto = useCallback(async (file: File, progressIndex: number): Promise<string> => {
     // Update progress to show compression
     setUploadProgress(prev => {
@@ -36,8 +120,45 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
     });
     setCurrentProcessing(file.name);
 
+    // Compress image on client side before uploading
+    // This ensures we stay under Vercel's 4.5MB limit and reduces upload time
+    let fileToUpload = file;
+    const VERCEL_LIMIT = 4.5 * 1024 * 1024; // 4.5MB
+    
+    // Always compress images to ensure they're under the limit and optimized
+    if (file.type.startsWith('image/')) {
+      try {
+        const originalSize = (file.size / 1024 / 1024).toFixed(1);
+        console.log(`Compressing "${file.name}" (${originalSize}MB) before upload...`);
+        fileToUpload = await compressImage(file);
+        const compressedSize = (fileToUpload.size / 1024 / 1024).toFixed(1);
+        console.log(`Compressed to ${compressedSize}MB (${((1 - fileToUpload.size / file.size) * 100).toFixed(0)}% reduction)`);
+      } catch (error) {
+        const errorMessage = `Failed to compress image: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        console.error('Compression error:', error);
+        setUploadProgress(prev => {
+          const updated = [...prev];
+          updated[progressIndex] = { fileName: file.name, status: 'error', error: errorMessage };
+          return updated;
+        });
+        throw new Error(errorMessage);
+      }
+    }
+
+    // Final check - if still too large after compression, reject
+    if (fileToUpload.size > VERCEL_LIMIT) {
+      const errorMessage = `File "${file.name}" is too large even after compression (${(fileToUpload.size / 1024 / 1024).toFixed(1)}MB). Please try a smaller image.`;
+      console.error('File still too large after compression:', errorMessage);
+      setUploadProgress(prev => {
+        const updated = [...prev];
+        updated[progressIndex] = { fileName: file.name, status: 'error', error: errorMessage };
+        return updated;
+      });
+      throw new Error(errorMessage);
+    }
+
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', fileToUpload);
 
     // Update progress to show uploading
     setUploadProgress(prev => {
@@ -52,9 +173,27 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const errorMessage = errorData.error || 'Upload failed';
-      console.error('Upload failed:', errorMessage, errorData);
+      let errorMessage = 'Upload failed';
+      
+      // Handle 413 (Payload Too Large) specifically
+      if (response.status === 413) {
+        errorMessage = `File "${file.name}" is too large. Vercel has a 4.5MB limit for uploads. Please compress or resize the image before uploading.`;
+      } else {
+        // Try to get error message from response
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          // If we can't parse the response, use status-based message
+          if (response.status === 413) {
+            errorMessage = `File "${file.name}" is too large. Maximum upload size is 4.5MB.`;
+          } else if (response.status >= 500) {
+            errorMessage = 'Server error. Please try again later.';
+          }
+        }
+      }
+      
+      console.error('Upload failed:', errorMessage, { status: response.status, fileName: file.name });
       setUploadProgress(prev => {
         const updated = [...prev];
         updated[progressIndex] = { fileName: file.name, status: 'error', error: errorMessage };
@@ -307,7 +446,7 @@ export function PhotoUpload({ photos, onPhotosChange, maxPhotos = 10 }: PhotoUpl
                 drag and drop
               </div>
               <p className="text-xs text-gray-500">
-                PNG, JPG, GIF up to 50MB - auto-resized to 2MB ({photos.length}/{maxPhotos} photos)
+                PNG, JPG, GIF - auto-compressed and resized ({photos.length}/{maxPhotos} photos)
               </p>
               <button
                 type="button"

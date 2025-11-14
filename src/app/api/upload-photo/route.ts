@@ -76,6 +76,11 @@ async function compressImage(buffer: Buffer): Promise<Buffer> {
   return finalResult;
 }
 
+// Vercel serverless functions have a 4.5MB body size limit
+// This is a hard limit that cannot be changed
+// Files larger than this will be rejected by Vercel before reaching this code
+const VERCEL_BODY_LIMIT = 4.5 * 1024 * 1024; // 4.5MB
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -88,7 +93,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validate input file size (max 50MB)
+    // Validate input file size - must be under Vercel's 4.5MB limit
+    // Note: This check happens after Vercel's limit, so files > 4.5MB won't reach here
+    // But we keep this check for clarity and to provide better error messages
+    if (file.size > VERCEL_BODY_LIMIT) {
+      return NextResponse.json(
+        { error: `File too large. Maximum upload size is ${(VERCEL_BODY_LIMIT / 1024 / 1024).toFixed(1)}MB due to Vercel's serverless function limits. Please compress or resize the image before uploading.` },
+        { status: 413 }
+      );
+    }
+
+    // Also check against our processing limit (50MB) for safety
     if (file.size > MAX_INPUT_SIZE) {
       return NextResponse.json(
         { error: `File too large. Maximum input size is ${MAX_INPUT_SIZE / 1024 / 1024}MB` },
@@ -134,16 +149,16 @@ export async function POST(request: Request) {
     // Check if it's a size error
     if (error && typeof error === 'object' && 'message' in error) {
       const errorMessage = (error as Error).message;
-      if (errorMessage.includes('too large') || errorMessage.includes('413')) {
+      if (errorMessage.includes('too large') || errorMessage.includes('413') || errorMessage.includes('PayloadTooLargeError')) {
         return NextResponse.json(
-          { error: 'File too large. Please choose a smaller image.' },
+          { error: `File too large. Vercel has a ${(VERCEL_BODY_LIMIT / 1024 / 1024).toFixed(1)}MB limit for uploads. Please compress or resize the image before uploading.` },
           { status: 413 }
         );
       }
     }
     
     return NextResponse.json(
-      { error: 'Failed to upload file' },
+      { error: 'Failed to upload file. Please try again or contact support if the problem persists.' },
       { status: 500 }
     );
   }
