@@ -11,6 +11,7 @@ import Link from "next/link";
 import { getGoatAge, getGoatPlaceholder } from "@/lib/data";
 import { useDatabase } from "@/lib/database-context";
 import { AnimalsHero } from "@/components/animals-hero";
+import { Animal } from "@/lib/db/schema";
 
 // Filter options
 const FILTER_OPTIONS = [
@@ -26,8 +27,15 @@ const FILTER_OPTIONS = [
 type FilterType = typeof FILTER_OPTIONS[number]['id'];
 
 export default function AnimalsPage() {
-  const { goats, loading, error } = useDatabase();
+  const { animals, loading, error } = useDatabase();
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
+  
+  // Get animals by type
+  const goats = useMemo(() => animals.filter(a => a.animal_type === 'Goat'), [animals]);
+  const cows = useMemo(() => animals.filter(a => a.animal_type === 'Cow'), [animals]);
+  const horses = useMemo(() => animals.filter(a => a.animal_type === 'Horse'), [animals]);
+  const dogs = useMemo(() => animals.filter(a => a.animal_type === 'Dog'), [animals]);
+  const cats = useMemo(() => animals.filter(a => a.animal_type === 'Cat'), [animals]);
   
   // Filter logic for goats
   const filteredGoats = useMemo(() => {
@@ -54,6 +62,91 @@ export default function AnimalsPage() {
       }
     });
   }, [goats, selectedFilter]);
+
+  // Helper function to get animal age display
+  const getAnimalAge = (animal: Animal) => {
+    if (animal.animal_type === 'Goat') {
+      return getGoatAge(animal);
+    }
+    if (animal.birth_date) {
+      const birthYear = new Date(animal.birth_date).getFullYear();
+      const currentYear = new Date().getFullYear();
+      const age = currentYear - birthYear;
+      if (age === 0) {
+        return 'Less than 1 year';
+      } else if (age === 1) {
+        return '1 year old';
+      } else {
+        return `${age} years old`;
+      }
+    }
+    return 'Age unknown';
+  };
+
+  // Helper function to get placeholder emoji
+  const getAnimalPlaceholder = (animal: Animal) => {
+    switch (animal.animal_type) {
+      case 'Goat':
+        return getGoatPlaceholder(animal);
+      case 'Cow':
+        return '🐄';
+      case 'Horse':
+        return '🐴';
+      case 'Dog':
+        return '🐕';
+      case 'Cat':
+        return '🐈';
+      default:
+        return '🐾';
+    }
+  };
+
+  // Component to render animal cards
+  const AnimalCard = ({ animal }: { animal: Animal }) => (
+    <Card key={animal.id} className="hover:shadow-lg transition-shadow">
+      <div className="h-48 bg-gradient-earth-to-light rounded-t-lg overflow-hidden">
+        {animal.photos && animal.photos.length > 0 ? (
+          <img
+            src={animal.photos[0]}
+            alt={`${animal.name}`}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-6xl">{getAnimalPlaceholder(animal)}</div>
+          </div>
+        )}
+      </div>
+      <CardHeader>
+        <div className="flex justify-between items-start mb-2">
+          <CardTitle className="text-xl">{animal.name}</CardTitle>
+          <Badge className="bg-gradient-growth text-white hover:opacity-90">
+            {animal.type}
+          </Badge>
+        </div>
+        <CardDescription className="text-base font-medium text-gray-700">
+          {getAnimalAge(animal)}
+          {animal.animal_type === 'Goat' && animal.horn_status && ` • ${animal.horn_status}`}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+          {animal.bio}
+        </p>
+        <div className="flex items-center text-sm text-gray-600 mb-3">
+          <Award className="h-4 w-4 mr-2" />
+          <span>{animal.registered ? "Registered" : "Unregistered"}</span>
+        </div>
+        {animal.is_for_sale && (
+          <div className="mb-3">
+            <Badge variant="outline" className="text-fresh-sprout-green border-fresh-sprout-green">
+              For Sale: ${animal.price}
+            </Badge>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   // Show loading state
   if (loading) {
@@ -215,48 +308,52 @@ export default function AnimalsPage() {
       </section>
 
       {/* Cows Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-growth rounded-full mb-6">
-              <Star className="h-10 w-10 text-white" />
+      {cows.length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-growth rounded-full mb-6">
+                <Star className="h-10 w-10 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Family Cows</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Our family cows provide both beef and dairy for our family and community. 
+                They're gentle giants who love attention and treats.
+              </p>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Family Cows</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Our family cows provide both beef and dairy for our family and community. 
-              They're gentle giants who love attention and treats.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-64 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
-                <div className="text-6xl">🐄</div>
-              </div>
-              <CardHeader>
-                <CardTitle>Dairy Cows</CardTitle>
-                <CardDescription>
-                  Our dairy cows provide rich milk for our family and local customers. 
-                  They're well-trained and easy to handle.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-64 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
-                <div className="text-6xl">🐄</div>
-              </div>
-              <CardHeader>
-                <CardTitle>Beef Cattle</CardTitle>
-                <CardDescription>
-                  Quality beef cattle raised on pasture with a focus on humane treatment 
-                  and sustainable practices.
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {cows.map((cow) => (
+                <AnimalCard key={cow.id} animal={cow} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Horses Section */}
+      {horses.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-growth rounded-full mb-6">
+                <Heart className="h-10 w-10 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Horses</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Our horses are valued members of the farm family, helping with work and providing 
+                companionship and joy.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {horses.map((horse) => (
+                <AnimalCard key={horse.id} animal={horse} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Chickens Section */}
       <section className="py-16 bg-white">
@@ -313,48 +410,52 @@ export default function AnimalsPage() {
       </section>
 
       {/* Farm Dogs Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-growth rounded-full mb-6">
-              <Heart className="h-10 w-10 text-white" />
+      {dogs.length > 0 && (
+        <section className="py-16 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-growth rounded-full mb-6">
+                <Heart className="h-10 w-10 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Farm Dogs</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Our loyal farm dogs are more than just pets - they're working members of our team 
+                and beloved family companions.
+              </p>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Farm Dogs</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Our loyal farm dogs are more than just pets - they're working members of our team 
-              and beloved family companions.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-64 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
-                <div className="text-6xl">🐕</div>
-              </div>
-              <CardHeader>
-                <CardTitle>Working Dogs</CardTitle>
-                <CardDescription>
-                  Our working dogs help with livestock management and farm security. 
-                  They're intelligent, loyal, and love their jobs.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            <Card className="hover:shadow-lg transition-shadow">
-              <div className="h-64 bg-gradient-earth-to-light rounded-t-lg flex items-center justify-center">
-                <div className="text-6xl">🐕</div>
-              </div>
-              <CardHeader>
-                <CardTitle>Family Companions</CardTitle>
-                <CardDescription>
-                  When they're not working, our dogs are loving family pets who enjoy 
-                  belly rubs and playing with visitors.
-                </CardDescription>
-              </CardHeader>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {dogs.map((dog) => (
+                <AnimalCard key={dog.id} animal={dog} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* Cats Section */}
+      {cats.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-growth rounded-full mb-6">
+                <Heart className="h-10 w-10 text-white" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">Farm Cats</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Our farm cats help keep the barn and farmstead free of pests while providing 
+                companionship and entertainment.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {cats.map((cat) => (
+                <AnimalCard key={cat.id} animal={cat} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Visit CTA */}
       <section className="py-16 bg-gradient-golden-hour">
