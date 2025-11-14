@@ -487,8 +487,9 @@ export default function GoatsPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Upcoming Kiddings</h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Reserve your spot for upcoming kids! We'll have several litters available 
-              throughout the year.
+              Reserve your spot for upcoming kids from The Bold Farm.
+              <br />
+              We usually have kids available in spring and fall.
             </p>
           </div>
 
