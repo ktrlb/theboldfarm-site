@@ -30,7 +30,7 @@ export function BeefHero() {
 
   return (
     <HeroWithImage
-      albumNames={heroImage ? [] : []}
+      albumNames={[]}
       defaultImage={heroImage || undefined}
       className="min-h-[60vh] flex items-center justify-center"
     >

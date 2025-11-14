@@ -31,54 +31,43 @@ export function HeroWithImage({
   fallbackClassName = "bg-cream",
   defaultImage
 }: HeroWithImageProps) {
-  const [heroImage, setHeroImage] = useState<string | null>(defaultImage || null);
+  // Always start with fallback image to prevent flashing unwanted images
+  const [heroImage, setHeroImage] = useState<string | null>(defaultImage || DEFAULT_FALLBACK_IMAGE);
   const [loading, setLoading] = useState(!defaultImage);
 
   useEffect(() => {
-    // If defaultImage is provided, use it and don't fetch
+    // If defaultImage is provided, use it immediately
     if (defaultImage) {
       setHeroImage(defaultImage);
       setLoading(false);
       return;
     }
 
-    async function fetchImage() {
-      try {
-        // If no album names provided, skip album fetching
-        // Assigned images should be passed via defaultImage prop
-        if (albumNames.length === 0) {
-          // Use fallback image if no album names provided
-          setHeroImage(DEFAULT_FALLBACK_IMAGE);
-          setLoading(false);
-          return;
-        }
-        // Only fetch from albums if no defaultImage was provided
-        // This is a fallback for components that haven't migrated to image placements yet
-        const params = new URLSearchParams();
-        albumNames.forEach(name => params.append('albumNames', name));
-        const res = await fetch(`/api/images?${params.toString()}`);
-        const data = await res.json();
-        if (data.images && data.images.length > 0) {
-          setHeroImage(data.images[0]);
-        } else {
-          // Use fallback image if no images found from albums
-          setHeroImage(DEFAULT_FALLBACK_IMAGE);
-        }
-      } catch (error) {
-        console.error('[HeroWithImage] Error fetching hero image:', error);
-        // Use fallback image on error
-        setHeroImage(DEFAULT_FALLBACK_IMAGE);
-      } finally {
-        setLoading(false);
-      }
-    }
-
+    // If no defaultImage, use fallback image immediately (don't fetch from albums)
+    // This prevents showing random album images while waiting for assigned images
+    setHeroImage(DEFAULT_FALLBACK_IMAGE);
+    setLoading(false);
+    
+    // Only fetch from albums if explicitly requested (for legacy components)
+    // But prefer fallback image over album images to avoid showing unwanted photos
     if (albumNames.length > 0) {
+      async function fetchImage() {
+        try {
+          const params = new URLSearchParams();
+          albumNames.forEach(name => params.append('albumNames', name));
+          const res = await fetch(`/api/images?${params.toString()}`);
+          const data = await res.json();
+          // Only use album image if we have one AND no defaultImage was ever provided
+          // Otherwise stick with fallback
+          if (data.images && data.images.length > 0 && !defaultImage) {
+            setHeroImage(data.images[0]);
+          }
+        } catch (error) {
+          console.error('[HeroWithImage] Error fetching hero image:', error);
+          // Keep fallback image on error
+        }
+      }
       fetchImage();
-    } else {
-      // Use fallback image if no album names provided
-      setHeroImage(DEFAULT_FALLBACK_IMAGE);
-      setLoading(false);
     }
     // Dependencies: defaultImage and albumNames array
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -25,7 +25,7 @@ export function AnimalsHero() {
 
   return (
     <HeroWithImage 
-      albumNames={assignedImage ? [] : ['animals', 'farm', 'goats', 'general', 'site']}
+      albumNames={[]}
       className="py-20"
       defaultImage={assignedImage || undefined}
     >

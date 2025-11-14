@@ -24,7 +24,7 @@ export function ContactHero() {
 
   return (
     <HeroWithImage 
-      albumNames={assignedImage ? [] : ['farm', 'contact', 'general', 'site']}
+      albumNames={[]}
       className="py-20"
       defaultImage={assignedImage || undefined}
     >

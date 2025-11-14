@@ -302,21 +302,16 @@ export default function GoatsPage() {
                     </p>
 
                     {goat.status === "Available" ? (
-                      <div className="space-y-3">
-                        <Button className="w-full bg-gradient-growth hover:opacity-90">
-                          Place $100 Deposit
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          className="w-full"
-                          onClick={() => {
-                            setSelectedGoat(goat);
-                            setContactModalOpen(true);
-                          }}
-                        >
-                          Contact About This Goat
-                        </Button>
-                      </div>
+                      <Button 
+                        variant="outline" 
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedGoat(goat);
+                          setContactModalOpen(true);
+                        }}
+                      >
+                        Contact About This Goat
+                      </Button>
                     ) : (
                       <div className="text-center py-2">
                         <Badge variant="secondary" className="text-gray-600">
@@ -455,21 +450,16 @@ export default function GoatsPage() {
                   </p>
 
                   {isGoatForSale(goat) && goat.status === "Available" ? (
-                    <div className="space-y-3">
-                      <Button className="w-full bg-gradient-growth hover:opacity-90">
-                        Place $100 Deposit
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => {
-                          setSelectedGoat(goat);
-                          setContactModalOpen(true);
-                        }}
-                      >
-                        Contact About This Goat
-                      </Button>
-                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => {
+                        setSelectedGoat(goat);
+                        setContactModalOpen(true);
+                      }}
+                    >
+                      Contact About This Goat
+                    </Button>
                   ) : goat.status === "Available" ? (
                     <div className="text-center py-2">
                       <Badge variant="secondary" className="text-gray-600">

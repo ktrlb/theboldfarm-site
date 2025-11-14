@@ -25,7 +25,7 @@ export function ShopHero() {
 
   return (
     <HeroWithImage 
-      albumNames={assignedImage ? [] : ['products', 'shop', 'farm', 'general', 'site']}
+      albumNames={[]}
       className="py-20"
       defaultImage={assignedImage || undefined}
     >
