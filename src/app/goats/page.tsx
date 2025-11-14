@@ -146,6 +146,9 @@ export default function GoatsPage() {
                   Prices vary based on registration status, age, and genetics. 
                   Contact us for current pricing on specific animals.
                 </CardDescription>
+                <p className="text-sm text-gray-600 mt-3">
+                  We are generally firm on our animal pricing, but we do make deals when purchasing more than one goat.
+                </p>
               </CardContent>
             </Card>
 
@@ -169,7 +172,7 @@ export default function GoatsPage() {
                 <div className="mx-auto w-16 h-16 bg-gradient-growth rounded-full flex items-center justify-center mb-4">
                   <Award className="h-8 w-8 text-white" />
                 </div>
-                <CardTitle>Quality Guarantee</CardTitle>
+                <CardTitle>Health & Support</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription>
@@ -189,7 +192,7 @@ export default function GoatsPage() {
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-gray-900 mb-4">Goats for Sale</h2>
               <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                These goats are currently available for purchase. Each one comes with our quality guarantee 
+                These goats are currently available for purchase. Each one comes with health records 
                 and ongoing support.
               </p>
             </div>

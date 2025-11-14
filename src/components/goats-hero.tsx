@@ -44,8 +44,10 @@ export function GoatsHero() {
         </div>
 
         <p className="text-xl max-w-3xl mx-auto drop-shadow-lg">
-          Quality Nigerian Dwarf goats available for your homestead. All our goats are healthy, 
-          well-socialized, and come with ongoing support.
+          Quality Nigerian Dwarf goats available for your homestead.
+          <br />
+          <br />
+          We prioritize our goats&apos; health &amp; socialization, and will be available for questions before and after you bring your new goats home.
         </p>
       </div>
     </HeroWithImage>
